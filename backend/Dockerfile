@@ -28,8 +28,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/src/database/migrations ./src/database/migrations
-COPY --from=builder /app/src/services/qrcode ./src/services/qrcode/
-COPY --from=builder /app/src/services/qrcode.js ./src/services/qrcode.js 2>/dev/null || true
+COPY --from=builder /app/src/services ./src/services
 
 # 设置时区
 ENV TZ=Asia/Shanghai
