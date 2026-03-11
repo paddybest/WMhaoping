@@ -1,0 +1,9 @@
+// 检查数组是否包含某个元素
+function contains(arr, item) {
+  if (!arr || !arr.length) return false
+  return arr.indexOf(item) > -1
+}
+
+module.exports = {
+  contains: contains
+}

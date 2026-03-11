@@ -1,0 +1,48 @@
+{
+  "server": {
+    "port": 5000,
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "host": "${DB_HOST}",
+    "port": ${DB_PORT},
+    "user": "${DB_USER}",
+    "password": "${DB_PASSWORD}",
+    "database": "${DB_NAME}",
+    "pool": {
+      "min": 5,
+      "max": 20,
+      "acquire": 30000,
+      "idle": 10000
+    }
+  },
+  "redis": {
+    "host": "${REDIS_HOST}",
+    "port": ${REDIS_PORT},
+    "password": "${REDIS_PASSWORD}",
+    "prefix": "haopingbao:"
+  },
+  "jwt": {
+    "secret": "${JWT_SECRET}",
+    "expiresIn": "${JWT_EXPIRES_IN}"
+  },
+  "oss": {
+    "region": "${OSS_REGION}",
+    "accessKeyId": "${OSS_ACCESS_KEY_ID}",
+    "accessKeySecret": "${OSS_ACCESS_KEY_SECRET}",
+    "bucket": "${OSS_BUCKET}"
+  },
+  "wechat": {
+    "appId": "${WECHAT_APP_ID}",
+    "appSecret": "${WECHAT_APP_SECRET}"
+  },
+  "ai": {
+    "apiKey": "${DEEPSEEK_API_KEY}",
+    "model": "deepseek-chat",
+    "timeout": 30000
+  },
+  "cors": {
+    "origin": ["${FRONTEND_URL}"],
+    "credentials": true
+  }
+}

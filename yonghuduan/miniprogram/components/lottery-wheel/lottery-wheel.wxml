@@ -1,0 +1,20 @@
+<view class="wheel-container">
+  <view class="wheel-body" style="{{wheelStyle}}">
+    <!-- 转盘分段 -->
+    <!-- 奖励码段 (左侧) -->
+    <view class="segment segment-1">
+      <text class="segment-label">6位奖励码</text>
+    </view>
+
+    <!-- 感谢参与段 (右侧) -->
+    <view class="segment segment-2">
+      <text class="segment-label">谢谢参与</text>
+    </view>
+
+    <!-- 转盘中心装饰 -->
+    <view class="wheel-center"></view>
+  </view>
+
+  <!-- 指针 -->
+  <view class="pointer"></view>
+</view>

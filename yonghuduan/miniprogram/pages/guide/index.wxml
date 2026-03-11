@@ -1,0 +1,71 @@
+<view class="container">
+  <view class="error-header">
+    <view class="error-icon">!</view>
+    <text class="error-title">审核未通过</text>
+    <text class="error-reason">{{reason}}</text>
+  </view>
+
+  <view class="guide-section">
+    <view class="guide-title">正确操作步骤</view>
+    
+    <view class="step-item">
+      <view class="step-number">1</view>
+      <view class="step-content">
+        <view class="step-name">复制评价内容</view>
+        <view class="step-desc">在评价详情页点击「复制文案」按钮</view>
+      </view>
+    </view>
+
+    <view class="step-item">
+      <view class="step-number">2</view>
+      <view class="step-content">
+        <view class="step-name">跳转到外卖平台</view>
+        <view class="step-desc">点击「美团评价」或「饿了么评价」按钮</view>
+      </view>
+    </view>
+
+    <view class="step-item">
+      <view class="step-number">3</view>
+      <view class="step-content">
+        <view class="step-name">找到待评价订单</view>
+        <view class="step-desc">在订单列表中找到待评价的订单</view>
+      </view>
+    </view>
+
+    <view class="step-item">
+      <view class="step-number">4</view>
+      <view class="step-content">
+        <view class="step-name">粘贴评价内容</view>
+        <view class="step-desc">长按输入框粘贴刚才复制的评价内容</view>
+      </view>
+    </view>
+
+    <view class="step-item">
+      <view class="step-number">5</view>
+      <view class="step-content">
+        <view class="step-name">提交评价</view>
+        <view class="step-desc">确认无误后点击提交评价</view>
+      </view>
+    </view>
+
+    <view class="step-item">
+      <view class="step-number">6</view>
+      <view class="step-content">
+        <view class="step-name">截图并上传</view>
+        <view class="step-desc">评价成功后截图，返回本小程序上传</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="tips-section">
+    <view class="tips-title">注意事项</view>
+    <view class="tip-item">请确保截图包含完整的评价内容</view>
+    <view class="tip-item">截图需显示「评价成功」状态</view>
+    <view class="tip-item">评价内容需与生成的内容一致</view>
+  </view>
+
+  <view class="footer">
+    <button class="primary-btn" bindtap="onGoBack">重新提交审核</button>
+    <button class="secondary-btn" bindtap="onViewReview">查看评价内容</button>
+  </view>
+</view>

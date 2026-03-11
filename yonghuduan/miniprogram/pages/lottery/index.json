@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "six-card-lottery": "/components/six-card-lottery/six-card-lottery"
+  },
+  "navigationBarTitleText": "幸运大抽奖",
+  "navigationBarBackgroundColor": "#1a1a2e",
+  "navigationBarTextStyle": "white",
+  "backgroundColor": "#1a1a2e"
+}

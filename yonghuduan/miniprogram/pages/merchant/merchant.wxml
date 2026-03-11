@@ -1,0 +1,46 @@
+<!--pages/merchant/merchant.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">选择商家</text>
+    <text class="subtitle">请选择要查看的商家</text>
+  </view>
+
+  <view class="merchant-list">
+    <view
+      class="merchant-item {{item.id === selectedMerchantId ? 'selected' : ''}}"
+      wx:for="{{merchants}}"
+      wx:key="id"
+      bindtap="selectMerchant"
+      data-id="{{item.id}}"
+    >
+      <view class="merchant-info">
+        <view class="merchant-name">{{item.name}}</view>
+        <view class="merchant-desc" wx:if="{{item.description}}">{{item.description}}</view>
+        <view class="merchant-status {{item.is_active ? 'active' : 'inactive'}}">
+          <text class="status-dot"></text>
+          <text class="status-text">{{item.is_active ? '营业中' : '已打烊'}}</text>
+        </view>
+      </view>
+      <view class="check-icon" wx:if="{{item.id === selectedMerchantId}}">
+        <text>✓</text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{merchants.length === 0 && !loading}}">
+      <text class="empty-icon">📭</text>
+      <text class="empty-text">暂无可用商家</text>
+      <text class="empty-hint">请稍后再试</text>
+    </view>
+
+    <view class="loading-state" wx:if="{{loading}}">
+      <text class="loading-spinner"></text>
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="refresh-btn" bindtap="refreshMerchants" disabled="{{loading}}">
+      {{loading ? '加载中...' : '刷新商家列表'}}
+    </button>
+  </view>
+</view>

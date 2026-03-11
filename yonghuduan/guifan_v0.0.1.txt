@@ -1,0 +1,85 @@
+AI 评价助手：技术规范文件 (Tech Spec)
+1. 技术栈 (Tech Stack)小程序端 (C-End): 
+微信原生框架 (WXML / WXSS / JavaScript)。
+商家端 (B-End): Vue 3 + Vite + Element Plus。
+后端服务: 微信云开发 (CloudBase)。
+数据库: 云开发阿里云据库。
+存储: 云存储 (CDN)。
+云函数: Node.js 18+。
+AI 接口: 调用 deepseek。
+
+
+2. 数据库设计 (Database Schema)
+
+2.1 集合：products (类目配置)
+字段名,类型,描述
+_id,String,自动生成
+name,String,类目名称 (如：数码家电)
+tags,Array,"该类目可选标签 (如：[""颜值高"", ""质量稳""])"
+updateTime,Date,最后修改时间
+
+2.2 集合：images (素材库)
+字段名,类型,描述
+_id,String,自动生成
+fileID,String,云存储图片 ID (cloud://...)
+categoryId,String,关联 products 表的 _id
+
+2.3 集合：lottery_codes (奖励记录)
+字段名,类型,描述
+_id,String,自动生成
+code,String,唯一 6 位随机码 (大写字母+数字)
+status,Number,状态：0-未使用，1-已核销
+openid,String,生成该码的用户微信标识
+createTime,Date,生成时间
+
+
+3. 云函数接口定义 (Cloud Function API)
+
+3.1 generateReview
+功能: 接收标签，请求 AI 生成文案并匹配图库图片。
+输入 (event):
+{ "categoryId": "xxx", "tags": ["标签A", "标签B"] }
+处理逻辑:
+构造 Prompt 访问 LLM 接口，要求生成口语化、带有 Emoji 的买家真实评价。
+根据 categoryId 从 images 集合中随机抽取 3 张图片。
+调用 openapi.security.msgSecCheck 进行内容安全审核。
+输出:
+{ "text": "AI生成的文案", "imgList": ["fileID1", "fileID2"] }
+
+3.2 createLotteryCode
+功能: 保存行为验证成功后生成凭证。
+逻辑:
+生成不重复的 6 位随机码。
+将 status 设为 0，记录 createTime。
+输出: { "code": "XY7890" }
+
+
+4. 前端逻辑规范
+
+4.1 图片保存与奖励闭环逻辑用户点击 saveImages 按钮。
+循环调用 wx.saveImageToPhotosAlbum 保存当前展示的图片。
+判断回调:若 success: 弹出 Loading，调用 createLotteryCode 云函数。
+若 fail: 判断是否为“拒绝授权”，提示用户去设置页开启权限。
+展示生成的 code，并提供“一键复制客服微信号”按钮。
+
+4.2 商家端图片上传逻辑商家在 Web 后台选择类目。
+调用 cloud.uploadFile 将本地图片上传。
+上传成功后将返回的 fileID 和对应类目 ID 写入 images 集合。
+
+
+5. 安全与约束 (Safety & Constraints)
+敏感词过滤: 所有 AI 生成内容必须在后端经过微信安全接口校验，拦截违规信息。
+权限限制:
+products 表: 所有用户只读，仅管理员可读写。
+lottery_codes 表: 设置为“仅管理端可读写”，前端禁止直接访问，必须通过云函数操作。
+UI 限制: 小程序内不得出现“返现”、“钱”等敏感词，统一替换为“神秘礼包”、“体验奖励”。
+
+
+6. 环境部署步骤小程序端: 
+在 app.js 中初始化 wx.cloud.init 填入环境 ID。
+云函数端:设置 config.json 权限。
+安装 axios 或模型官方 SDK 依赖。
+商家端:使用 cloudbase-js-sdk 连接云环境。
+静态资源部署至云托管。
+
+

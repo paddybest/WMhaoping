@@ -1,0 +1,9 @@
+{
+  "name": "lottery_v2",
+  "version": "1.0.0",
+  "description": "Lottery code generation cloud function v2",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}

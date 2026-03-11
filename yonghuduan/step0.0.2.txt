@@ -1,0 +1,766 @@
+AI 评价助手小程序 - 实施方案
+Context
+基于现有的微信云开发 QuickStart 框架，需要开发一个面向电商买家的 AI 评价助手小程序。该产品通过 AI 智能生成评价文案与配图，降低用户撰写高质量评价的门槛，并提供奖励激励用户参与评价沉淀，最终引导用户进入商家私域客服体系。
+
+现有基础
+项目已配置微信云开发环境 (env: cloud1-9gbrkqwy4f67587b)
+已有基础的云函数框架 (quickstartFunctions)
+已有云开发 SDK 集成
+已有基础组件系统 (cloudTipModal)
+目标
+构建一个完整的小程序，实现：
+
+类目和标签选择界面
+AI 评价文案生成与图片匹配
+评价内容展示与保存
+奖励验证码生成与客服引导
+实施方案
+
+=====================================================
+
+【第一阶段：数据库与云存储配置】
+1.1 数据库集合创建
+创建 products 集合 (类目配置表)
+
+
+// 示例文档结构
+{
+  "_id": "auto_generated",
+  "name": "女装",
+  "tags": ["面料舒适", "版型显瘦", "物流快", "包装精美", "性价比高", "款式时尚"],
+  "updateTime": new Date()
+}
+创建 images 集合 (素材库)
+
+
+// 示例文档结构
+{
+  "_id": "auto_generated",
+  "fileID": "cloud://xxx.png",
+  "categoryId": "product_id"
+}
+创建 lottery_codes 集合 (奖励记录)
+
+
+// 示例文档结构
+{
+  "_id": "auto_generated",
+  "code": "ABC123",  // 唯一索引
+  "status": 0,  // 0-未使用, 1-已核销
+  "openid": "user_openid",
+  "createTime": new Date()
+}
+操作步骤：
+
+在微信开发者工具中打开云开发控制台
+进入数据库管理
+创建上述三个集合
+为 lottery_codes.code 字段创建唯一索引
+为 images.categoryId 字段创建索引
+配置数据库权限规则
+1.2 云存储配置
+在云开发控制台创建 review-images 目录
+上传各分类对应的商品图片素材
+记录图片的 cloud:// fileID 用于数据库录入
+配置云存储权限为所有用户可读
+
+
+=====================================================
+
+
+
+【第二阶段：云函数开发】
+2.1 创建 generateReview 云函数
+文件位置: cloudfunctions/generateReview/
+
+package.json:
+
+
+{
+  "name": "generateReview",
+  "version": "1.0.0",
+  "description": "AI评价文案生成云函数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}
+index.js 核心逻辑:
+
+
+const cloud = require('wx-server-sdk')
+const tcb = require('@cloudbase/node-sdk')
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+})
+
+const db = cloud.database()
+
+exports.main = async (event, context) => {
+  const { categoryId, tags } = event
+
+  try {
+    // 1. AI文案生成 (调用DeepSeek API)
+    const prompt = `你是一个电商买家，根据以下标签：${tags.join('、')}，写一段60字左右的中文评价，语气自然，多使用Emoji，体现真实购物体验。`
+    const reviewText = await callDeepSeekAPI(prompt)
+
+    // 2. 内容安全审核
+    const isSafe = await checkContentSafety(reviewText)
+    const finalText = isSafe ? reviewText : getDefaultText()
+
+    // 3. 匹配图片
+    const imgList = await getRandomImages(categoryId, 3)
+
+    return {
+      success: true,
+      data: {
+        text: finalText,
+        imgList: imgList
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: error.code || 'GENERATE_FAILED',
+        message: error.message
+      }
+    }
+  }
+}
+关键辅助函数:
+
+callDeepSeekAPI(prompt): 调用 DeepSeek API 生成文案
+checkContentSafety(content): 调用微信内容安全接口
+getRandomImages(categoryId, count): 从 images 集合随机获取图片
+getDefaultText(): 返回预设的安全默认文案
+2.2 创建 createLotteryCode 云函数
+文件位置: cloudfunctions/createLotteryCode/
+
+index.js 核心逻辑:
+
+
+const cloud = require('wx-server-sdk')
+
+cloud.init({
+  env: cloud.DYNAMIC_CURRENT_ENV
+})
+
+const db = cloud.database()
+const _ = db.command
+
+exports.main = async (event, context) => {
+  const { openid } = event
+
+  try {
+    // 生成唯一6位随机码
+    let code = generateRandomCode()
+    let attempts = 0
+    const maxAttempts = 10
+
+    // 确保码唯一
+    while (attempts < maxAttempts) {
+      const existing = await db.collection('lottery_codes')
+        .where({ code: code })
+        .count()
+
+      if (existing.total === 0) break
+
+      code = generateRandomCode()
+      attempts++
+    }
+
+    // 插入数据库
+    const result = await db.collection('lottery_codes').add({
+      data: {
+        code: code,
+        status: 0,
+        openid: openid,
+        createTime: new Date()
+      }
+    })
+
+    return {
+      success: true,
+      data: { code: code }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        code: 'CODE_GENERATE_FAILED',
+        message: error.message
+      }
+    }
+  }
+}
+
+function generateRandomCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = ''
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return code
+}
+
+
+
+=====================================================
+
+
+
+
+【第三阶段：页面开发】
+3.1 重构首页 (pages/index/index)
+目标: 将现有的快速了解云开发页面改造为类目标签选择页面
+
+index.js 核心逻辑:
+
+
+const app = getApp()
+
+Page({
+  data: {
+    categories: [],        // 类目列表
+    categoryIndex: -1,     // 选中的类目索引
+    currentTags: [],       // 当前类目的标签
+    selectedTags: [],      // 已选择的标签
+    canGenerate: false,    // 是否可以生成
+    loading: false
+  },
+
+  onLoad() {
+    this.loadCategories()
+  },
+
+  // 加载类目列表
+  async loadCategories() {
+    try {
+      const res = await wx.cloud.database().collection('products').get()
+      this.setData({
+        categories: res.data
+      })
+    } catch (error) {
+      wx.showToast({ title: '加载类目失败', icon: 'none' })
+    }
+  },
+
+  // 选择类目
+  onCategoryChange(e) {
+    const index = e.detail.value
+    this.setData({
+      categoryIndex: index,
+      currentTags: this.data.categories[index].tags,
+      selectedTags: [],
+      canGenerate: false
+    })
+  },
+
+  // 选择/取消标签
+  onTagToggle(e) {
+    const tag = e.currentTarget.dataset.tag
+    let selectedTags = [...this.data.selectedTags]
+
+    const idx = selectedTags.indexOf(tag)
+    if (idx > -1) {
+      selectedTags.splice(idx, 1)
+    } else {
+      selectedTags.push(tag)
+    }
+
+    const categoryId = this.data.categories[this.data.categoryIndex]._id
+    this.setData({
+      selectedTags,
+      canGenerate: selectedTags.length > 0
+    })
+  },
+
+  // 生成评价
+  async onGenerate() {
+    if (!this.data.canGenerate) return
+
+    this.setData({ loading: true })
+
+    try {
+      const categoryId = this.data.categories[this.data.categoryIndex]._id
+
+      const res = await wx.cloud.callFunction({
+        name: 'generateReview',
+        data: {
+          categoryId: categoryId,
+          tags: this.data.selectedTags
+        }
+      })
+
+      if (res.result.success) {
+        // 跳转到结果页
+        wx.navigateTo({
+          url: `/pages/result/result?data=${encodeURIComponent(JSON.stringify(res.result.data))}`
+        })
+      } else {
+        wx.showToast({
+          title: res.result.error.message || '生成失败',
+          icon: 'none'
+        })
+      }
+    } catch (error) {
+      wx.showToast({ title: '网络错误，请重试', icon: 'none' })
+    } finally {
+      this.setData({ loading: false })
+    }
+  }
+})
+index.wxml 结构:
+
+
+<view class="container">
+  <view class="header">
+    <text class="title">AI 评价助手</text>
+  </view>
+
+  <view class="section">
+    <picker class="category-picker" mode="selector" range="{{categories}}" range-key="name" bindchange="onCategoryChange">
+      <view class="picker-display">
+        <text>{{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择商品类目'}}</text>
+        <text class="arrow">▼</text>
+      </view>
+    </picker>
+  </view>
+
+  <view class="section tags-section" wx:if="{{currentTags.length > 0}}">
+    <view class="tags-grid">
+      <view
+        class="tag-item {{selectedTags.indexOf(tag) > -1 ? 'selected' : ''}}"
+        wx:for="{{currentTags}}"
+        wx:key="*this"
+        data-tag="{{item}}"
+        bindtap="onTagToggle"
+      >
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <view class="section action-section">
+    <button
+      class="generate-btn {{canGenerate ? 'active' : 'disabled'}}"
+      bindtap="onGenerate"
+      disabled="{{!canGenerate || loading}}"
+      loading="{{loading}}"
+    >
+      立即生成
+    </button>
+  </view>
+</view>
+index.wxss 样式:
+
+
+.container { padding: 30rpx; min-height: 100vh; background: #f5f5f5; }
+.header { text-align: center; margin-bottom: 60rpx; padding-top: 40rpx; }
+.title { font-size: 48rpx; font-weight: bold; color: #333; }
+
+.section { background: white; border-radius: 20rpx; padding: 30rpx; margin-bottom: 30rpx; }
+
+.category-picker { width: 100%; }
+.picker-display { display: flex; justify-content: space-between; align-items: center; padding: 20rpx; border: 2rpx solid #e0e0e0; border-radius: 10rpx; }
+.arrow { color: #999; }
+
+.tags-grid { display: flex; flex-wrap: wrap; gap: 20rpx; }
+.tag-item { padding: 16rpx 32rpx; border: 2rpx solid #e0e0e0; border-radius: 40rpx; background: #f5f5f5; color: #666; font-size: 28rpx; }
+.tag-item.selected { border-color: #07c160; background: #07c160; color: white; }
+
+.generate-btn { width: 100%; height: 90rpx; border-radius: 45rpx; font-size: 32rpx; border: none; }
+.generate-btn.disabled { background: #ccc; color: #999; }
+.generate-btn.active { background: linear-gradient(135deg, #07c160, #06ae56); color: white; }
+3.2 创建结果页 (pages/result/result)
+目录结构:
+
+
+pages/result/
+├── index.js
+├── index.wxml
+├── index.wxss
+└── index.json
+index.js 核心逻辑:
+
+
+Page({
+  data: {
+    reviewText: '',
+    imageUrls: [],
+    saveCount: 0,
+    rewardCode: '',
+    showModal: false,
+    customerServiceQR: '/images/customer-service-qrcode.png'
+  },
+
+  onLoad(options) {
+    const data = JSON.parse(decodeURIComponent(options.data))
+    this.setData({
+      reviewText: data.text,
+      imageUrls: data.imgList
+    })
+  },
+
+  // 复制文案
+  onCopyText() {
+    wx.setClipboardData({
+      data: this.data.reviewText,
+      success: () => {
+        wx.showToast({ title: '文案已复制' })
+      }
+    })
+  },
+
+  // 预览图片
+  onPreviewImage(e) {
+    const index = e.currentTarget.dataset.index
+    wx.previewImage({
+      current: this.data.imageUrls[index],
+      urls: this.data.imageUrls
+    })
+  },
+
+  // 保存单张图片
+  async onSaveSingle(e) {
+    const index = e.currentTarget.dataset.index
+    const url = this.data.imageUrls[index]
+
+    try {
+      await this.saveImageToAlbum(url)
+      wx.showToast({ title: '保存成功', icon: 'success' })
+    } catch (error) {
+      this.handlePermissionError()
+    }
+  },
+
+  // 保存所有图片
+  async onSaveAll() {
+    wx.showLoading({ title: '保存中...' })
+
+    try {
+      let successCount = 0
+
+      for (const url of this.data.imageUrls) {
+        try {
+          await this.saveImageToAlbum(url)
+          successCount++
+        } catch (error) {
+          console.error('保存失败:', error)
+        }
+      }
+
+      wx.hideLoading()
+
+      if (successCount === this.data.imageUrls.length) {
+        wx.showToast({ title: '全部保存成功', icon: 'success' })
+        await this.getRewardCode()
+      } else {
+        wx.showToast({
+          title: `成功保存${successCount}张`,
+          icon: 'none'
+        })
+      }
+    } catch (error) {
+      wx.hideLoading()
+      wx.showToast({ title: '保存失败', icon: 'none' })
+    }
+  },
+
+  // 保存图片到相册
+  saveImageToAlbum(url) {
+    return new Promise((resolve, reject) => {
+      wx.downloadFile({
+        url: url,
+        success: (res) => {
+          wx.saveImageToPhotosAlbum({
+            filePath: res.tempFilePath,
+            success: resolve,
+            fail: reject
+          })
+        },
+        fail: reject
+      })
+    })
+  },
+
+  // 处理权限错误
+  handlePermissionError() {
+    wx.getSetting({
+      success: (res) => {
+        if (res.authSetting['scope.writePhotosAlbum'] === false) {
+          wx.showModal({
+            title: '需要相册权限',
+            content: '保存图片需要您授权访问相册',
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting()
+              }
+            }
+          })
+        }
+      }
+    })
+  },
+
+  // 获取奖励码
+  async getRewardCode() {
+    try {
+      const app = getApp()
+      const res = await wx.cloud.callFunction({
+        name: 'createLotteryCode',
+        data: {
+          openid: app.globalData.openid || wx.getStorageSync('openid')
+        }
+      })
+
+      if (res.result.success) {
+        this.setData({
+          rewardCode: res.result.data.code,
+          showModal: true
+        })
+      }
+    } catch (error) {
+      console.error('获取奖励码失败:', error)
+    }
+  },
+
+  // 复制奖励码
+  onCopyCode() {
+    wx.setClipboardData({
+      data: this.data.rewardCode,
+      success: () => {
+        wx.showToast({ title: '验证码已复制' })
+      }
+    })
+  },
+
+  // 关闭弹窗
+  onCloseModal() {
+    this.setData({ showModal: false })
+  }
+})
+index.wxml 结构:
+
+
+<view class="container">
+  <!-- 文案区域 -->
+  <view class="section text-section">
+    <view class="section-header">
+      <text class="title">评价文案</text>
+      <button class="copy-btn" size="mini" bindtap="onCopyText">复制文案</button>
+    </view>
+    <view class="text-content">{{reviewText}}</view>
+  </view>
+
+  <!-- 图片区域 -->
+  <view class="section image-section">
+    <view class="section-header">
+      <text class="title">配图 ({{imageUrls.length}}张)</text>
+    </view>
+    <view class="image-grid">
+      <view class="image-item" wx:for="{{imageUrls}}" wx:key="*this" data-index="{{index}}" bindtap="onPreviewImage">
+        <image class="review-image" src="{{item}}" mode="aspectFill" lazy-load="{{true}}" />
+        <view class="save-icon" data-index="{{index}}" catchtap="onSaveSingle">
+          <text>⬇</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="action-section">
+    <button class="save-all-btn" bindtap="onSaveAll">保存所有图片</button>
+  </view>
+</view>
+
+<!-- 奖励弹窗 -->
+<view class="modal-mask" wx:if="{{showModal}}" bindtap="onCloseModal">
+  <view class="modal-content" catchtap="">
+    <view class="modal-header">
+      <text class="modal-title">🎉 恭喜获得分享奖励！</text>
+    </view>
+
+    <view class="code-section">
+      <text class="code-label">您的验证码</text>
+      <view class="code-display">{{rewardCode}}</view>
+      <button class="copy-code-btn" size="mini" bindtap="onCopyCode">复制验证码</button>
+    </view>
+
+    <view class="service-section">
+      <text class="service-label">请添加客服微信领取奖励</text>
+      <image class="service-qrcode" src="{{customerServiceQR}}" mode="aspectFit" />
+    </view>
+
+    <view class="modal-actions">
+      <button class="action-btn primary" open-type="addContact" session-from="weapp">去添加客服</button>
+      <button class="action-btn" bindtap="onCloseModal">我知道了</button>
+    </view>
+  </view>
+</view>
+
+
+
+=====================================================
+
+
+
+【第四阶段：配置与部署】
+4.1 更新 app.json
+
+{
+  "pages": [
+    "pages/index/index",
+    "pages/result/result"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#fff",
+    "navigationBarTitleText": "AI评价助手",
+    "navigationBarTextStyle": "black"
+  },
+  "sitemapLocation": "sitemap.json"
+}
+
+4.2 环境变量配置
+在云函数中配置环境变量 (在云开发控制台):
+
+DEEPSEEK_API_KEY: DeepSeek API 密钥
+DEEPSEEK_API_URL: DeepSeek API 地址
+
+4.3 部署清单
+数据库准备
+
+创建 products 集合并添加初始类目数据
+创建 images 集合并添加图片素材
+创建 lottery_codes 集合
+云存储准备
+
+创建 review-images 目录
+上传各分类商品图片
+在数据库中录入图片 fileID
+云函数部署
+
+部署 generateReview 云函数
+部署 createLotteryCode 云函数
+配置云函数环境变量
+小程序配置
+
+更新 app.json
+配置服务器域名
+申请必要权限 (相册写入)
+
+
+=====================================================
+
+
+
+【关键文件清单】
+需要修改的文件
+文件路径	修改内容
+miniprogram/app.json	更新页面路由和窗口配置
+miniprogram/pages/index/index.js	重写为类目标签选择逻辑
+miniprogram/pages/index/index.wxml	重写为类目标签选择界面
+miniprogram/pages/index/index.wxss	更新页面样式
+需要创建的文件
+文件路径	说明
+miniprogram/pages/result/index.js	结果页逻辑
+miniprogram/pages/result/index.wxml	结果页模板
+miniprogram/pages/result/index.wxss	结果页样式
+miniprogram/pages/result/index.json	结果页配置
+cloudfunctions/generateReview/index.js	AI生成云函数
+cloudfunctions/generateReview/package.json	云函数依赖配置
+cloudfunctions/createLotteryCode/index.js	奖励码云函数
+cloudfunctions/createLotteryCode/package.json	云函数依赖配置
+可复用的现有资源
+miniprogram/app.js - 云开发初始化代码
+miniprogram/images/icons/ - 现有图标资源
+cloudfunctions/quickstartFunctions/ - 云函数示例参考
+
+
+
+=====================================================
+
+
+
+【验证测试方案】
+功能测试
+首页功能
+
+类目选择器正常显示和选择
+标签随类目动态加载
+多选标签功能正常
+生成按钮状态正确响应
+AI生成功能
+
+云函数正确调用 DeepSeek API
+内容安全审核生效
+图片正确匹配并返回
+错误情况有友好提示
+结果页功能
+
+文案正确显示
+复制功能正常
+图片预览功能正常
+单张/批量保存功能正常
+奖励流程
+
+保存成功后自动生成验证码
+弹窗正确显示
+复制验证码功能正常
+客服引导正确展示
+兼容性测试
+iOS 12+ 系统测试
+Android 8+ 系统测试
+不同屏幕尺寸适配
+微信版本 7.0+ 测试
+安全测试
+内容安全审核触发测试
+敏感词过滤验证
+数据库权限验证
+用户隐私保护检查
+性能测试
+页面加载速度 < 2秒
+云函数响应时间 < 3秒
+图片加载优化效果
+内存占用监控
+
+
+
+=====================================================
+
+
+
+【部署步骤】
+开发环境
+克隆项目并安装依赖
+配置本地开发环境变量
+初始化数据库和云存储
+部署云函数到开发环境
+在微信开发者工具中预览测试
+
+
+生产环境
+创建生产环境云开发资源
+配置生产环境数据库和云存储
+上传生产环境图片素材
+部署云函数到生产环境
+提交小程序审核
+发布上线
+
+
+
+=====================================================
+
+
+
+【注意事项】
+API密钥安全: DeepSeek API 密钥需通过环境变量配置，不要硬编码
+内容审核: 必须启用微信内容安全审核，避免违规内容
+用户隐私: 仅收集必要信息，遵循微信隐私规范
+错误处理: 完善的错误处理和用户提示
+性能优化: 图片使用 CDN 加速和懒加载
+代码规范: 遵循微信小程序开发最佳实践

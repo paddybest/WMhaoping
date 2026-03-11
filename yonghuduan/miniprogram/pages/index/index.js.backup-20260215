@@ -1,0 +1,240 @@
+// index.js
+const app = getApp()
+import { get, post } from '../../utils/api'
+
+Page({
+  data: {
+    categories: [],        // 类目列表
+    categoryNames: [],     // 类名列表（用于Picker）
+    categoryIndex: -1,     // 选中的类目索引
+    currentTags: [],       // 当前类目的标签
+    selectedTags: [],      // 已选择的标签
+    canGenerate: false,    // 是否可以生成
+    loading: false,
+    showDropdown: false,   // 是否显示下拉菜单
+    rating: 0,            // 用户评分
+    ratingText: '请选择评分'  // 评分文本
+  },
+
+  onLoad() {
+    this.loadCategories()
+  },
+
+  // 初始化默认类目（已废弃，数据由后端管理）
+  async initDefaultCategories() {
+    console.log('默认类目已由后端管理，前端不再初始化云数据库')
+    return true
+  },
+
+  // 加载类目列表
+  async loadCategories() {
+    try {
+      console.log('开始加载类目列表...')
+      const res = await get('/products')
+      console.log('类目加载成功:', res)
+
+      // 提取类名列表
+      const categoryNames = res.data.map(category => category.name)
+
+      this.setData({
+        categories: res.data,
+        categoryNames: categoryNames
+      })
+      console.log('🎯 Category names:', categoryNames)
+    } catch (error) {
+      console.error('加载类目失败:', error)
+
+      wx.showToast({
+        title: '加载类目失败: ' + (error.message || '未知错误'),
+        icon: 'none',
+        duration: 5000
+      })
+    }
+  },
+
+  // 切换下拉菜单
+  toggleDropdown() {
+    console.log('🎯 toggleDropdown clicked')
+    console.log('🎯 Available categories:', this.data.categoryNames)
+    this.setData({
+      showDropdown: !this.data.showDropdown
+    })
+  },
+
+  // 隐藏下拉菜单
+  hideDropdown() {
+    this.setData({
+      showDropdown: false
+    })
+  },
+
+  // 处理下拉菜单的选择
+  onCategorySelect(e) {
+    console.log('🎯 onCategorySelect:', e)
+    const index = e.currentTarget.dataset.index
+    console.log('🎯 Selected index:', index)
+
+    if (index >= 0 && index < this.data.categories.length) {
+      const category = this.data.categories[index]
+      console.log('🎯 Selected category:', category)
+
+      this.setData({
+        categoryIndex: index,
+        currentTags: category.tags || [],
+        selectedTags: [],
+        rating: 0,
+        ratingText: '请选择评分',
+        canGenerate: false,
+        showDropdown: false
+      })
+      console.log('🎯 Data updated successfully')
+    }
+  },
+
+  // 选择类目（保留兼容性）
+  onCategoryChange(e) {
+    console.log('🎯 onCategoryChange triggered:', e)
+    console.log('🎯 Event detail:', e.detail)
+
+    // 使用 e.detail.value 直接获取选中的索引
+    const index = e.detail.value
+    console.log('🎯 Selected index:', index)
+
+    // 确保 index 是有效的
+    if (index < 0 || index >= this.data.categories.length) {
+      console.error('Invalid index:', index)
+      wx.showToast({ title: '请选择有效类目', icon: 'none' })
+      return
+    }
+
+    const category = this.data.categories[index]
+    console.log('🎯 Selected category:', category)
+
+    this.setData({
+      categoryIndex: index,
+      currentTags: category.tags || [],
+      selectedTags: [],
+      rating: 0,
+      ratingText: '请选择评分',
+      canGenerate: false
+    })
+    console.log('🎯 Data updated successfully')
+    console.log('🎯 Current tags:', category.tags || [])
+  },
+
+  // 选择/取消标签
+  onTagToggle(e) {
+    const tag = e.currentTarget.dataset.tag
+    console.log('🏷️ Tag clicked:', tag)
+    console.log('🏷️ Current selectedTags:', this.data.selectedTags)
+
+    let selectedTags = [...this.data.selectedTags]
+
+    const idx = selectedTags.indexOf(tag)
+    if (idx > -1) {
+      selectedTags.splice(idx, 1)
+      console.log('🏷️ Tag removed, new selectedTags:', selectedTags)
+    } else {
+      selectedTags.push(tag)
+      console.log('🏷️ Tag added, new selectedTags:', selectedTags)
+    }
+
+    const canGenerate = selectedTags.length > 0 && this.data.rating > 0
+    console.log('🏷️ Can generate:', canGenerate)
+
+    this.setData({
+      selectedTags,
+      canGenerate: canGenerate
+    }, () => {
+      console.log('🏷️ Data updated, current selectedTags:', this.data.selectedTags)
+    })
+  },
+
+  // 选择评分
+  onRatingSelect(e) {
+    const rating = parseInt(e.currentTarget.dataset.rating)
+    const ratingTexts = ['', '很差', '较差', '一般', '良好', '很好']
+
+    this.setData({
+      rating: rating,
+      ratingText: ratingTexts[rating]
+    })
+
+    // 如果已经选择了标签，更新生成状态
+    const canGenerate = this.data.selectedTags.length > 0 && this.data.rating > 0
+    this.setData({
+      canGenerate: canGenerate
+    })
+  },
+
+  // 生成评价
+  async onGenerate() {
+    if (!this.data.canGenerate) return
+
+    this.setData({ loading: true })
+
+    try {
+      // 检查token是否存在
+      const token = wx.getStorageSync('token')
+      if (!token) {
+        wx.navigateTo({
+          url: '/pages/login/login'
+        })
+        return
+      }
+
+      const category = this.data.categories[this.data.categoryIndex]
+      const res = await post('/reviews/generate', {
+        productName: category.name,
+        tags: this.data.selectedTags,
+        rating: this.data.rating
+      })
+
+      console.log('API response:', res)
+
+      if (res.success) {
+        // 检查数据是否存在
+        if (!res.data) {
+          throw new Error('返回数据为空')
+        }
+        console.log('🚀 About to navigate to result page')
+        const navigateUrl = `/pages/result/index?data=${encodeURIComponent(JSON.stringify(res.data))}`
+        console.log('🔗 Navigation URL:', navigateUrl)
+
+        // 跳转到结果页
+        wx.navigateTo({
+          url: navigateUrl,
+          success: function() {
+            console.log('✅ Navigation success!')
+          },
+          fail: function(err) {
+            console.error('❌ Navigation failed:', err)
+            console.error('Error details:', err.errMsg)
+          }
+        })
+        console.log('🎯 Navigation called')
+      } else {
+        const errorMsg = res.error?.message || res.message || '生成失败'
+        console.error('API error:', errorMsg)
+        throw new Error(errorMsg)
+      }
+    } catch (error) {
+      console.error('Generate error:', error)
+      let errorMsg = '网络错误，请重试'
+
+      if (error.errMsg) {
+        errorMsg = error.errMsg
+      }
+      if (error.message) {
+        errorMsg = error.message
+      }
+
+      wx.showToast({
+        title: errorMsg,
+        icon: 'none'
+      })
+    } finally {
+      this.setData({ loading: false })
+    }
+  }
+})

@@ -1,0 +1,426 @@
+/* Modern Index Color Scheme */
+.container {
+  padding: 30rpx;
+  min-height: 100vh;
+  background: #FAFBFC; /* Light gray background */
+}
+.header {
+  text-align: center;
+  margin-bottom: 60rpx;
+  padding-top: 40rpx;
+}
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #1A202C; /* Dark charcoal */
+}
+
+.section {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(26, 32, 44, 0.05); /* Subtle shadow */
+}
+
+.category-picker {
+  width: 100%;
+}
+.picker-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx;
+  border: 2rpx solid #E2E8F0; /* Light blue-gray border */
+  border-radius: 10rpx;
+  background: #F7FAFC;
+  transition: all 0.3s ease;
+}
+.picker-display:active {
+  transform: scale(0.98);
+  background: #EDF2F7;
+}
+.arrow {
+  color: #718096; /* Medium gray */
+  transition: transform 0.3s ease;
+}
+.picker-display:active .arrow {
+  transform: rotate(180deg);
+}
+
+.arrow.rotate {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 10rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+  z-index: 100;
+}
+
+.dropdown-menu.show {
+  max-height: 500rpx;
+  overflow-y: auto;
+  opacity: 1;
+  margin-top: 10rpx;
+}
+
+.dropdown-item {
+  padding: 25rpx 30rpx;
+  border-bottom: 1rpx solid #E2E8F0;
+  color: #4A5568;
+  font-size: 28rpx;
+  transition: background 0.2s ease;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:active {
+  background: #F7FAFC;
+}
+
+.dropdown-item.selected {
+  background: linear-gradient(135deg, #4299E1, #3182CE);
+  color: white;
+}
+
+/* Make section relative for dropdown positioning */
+.section {
+  position: relative;
+}
+
+.tags-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  padding: 10rpx;
+}
+
+/* 为标签添加入场动画 */
+.tags-grid .tag-item {
+  animation: tagFadeIn 0.5s ease-out forwards;
+  animation-fill-mode: both;
+  opacity: 0;
+}
+
+/* 递延动画效果 */
+.tags-grid .tag-item:nth-child(1) { animation-delay: 0.1s; }
+.tags-grid .tag-item:nth-child(2) { animation-delay: 0.2s; }
+.tags-grid .tag-item:nth-child(3) { animation-delay: 0.3s; }
+.tags-grid .tag-item:nth-child(4) { animation-delay: 0.4s; }
+.tags-grid .tag-item:nth-child(5) { animation-delay: 0.5s; }
+.tags-grid .tag-item:nth-child(6) { animation-delay: 0.6s; }
+.tags-grid .tag-item:nth-child(7) { animation-delay: 0.7s; }
+.tags-grid .tag-item:nth-child(8) { animation-delay: 0.8s; }
+
+@keyframes tagFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10rpx) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+/* 精致的未选中状态 */
+.tag-item {
+  padding: 16rpx 32rpx;
+  border: 2rpx solid #E2E8F0;
+  border-radius: 40rpx;
+  background: linear-gradient(135deg, #FAFBFC, #F7FAFC);
+  color: #4A5568;
+  font-size: 28rpx;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  backdrop-filter: blur(10rpx);
+}
+
+/* 选中状态 */
+.tag-item.selected {
+  border-color: #6366F1 !important;
+  background: linear-gradient(135deg, #6366F1, #4F46E5, #7C3AED) !important;
+  color: white !important;
+  box-shadow: 0 8rpx 24rpx rgba(99, 102, 241, 0.4) !important;
+  transform: scale(1.06) !important;
+  font-weight: 600;
+}
+
+/* 确保选中状态的active状态保持选中样式 */
+.tag-item.selected:active {
+  background: linear-gradient(135deg, #6366F1, #4F46E5, #7C3AED) !important;
+  transform: scale(1.06) !important;
+}
+
+/* 添加微妙的内部光泽 */
+.tag-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  opacity: 0.6;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* 标签文字样式 */
+.tag-text {
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+/* 未选中标签的active状态 */
+.tag-item:not(.selected):active {
+  transform: scale(0.92);
+  background: linear-gradient(135deg, #EDF2F7, #E2E8F0);
+}
+
+/* 点击涟漪效果 */
+.ripple-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ripple-effect {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.3) 40%,
+    transparent 70%
+  );
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: all 0.6s ease-out;
+}
+
+.tag-item:active .ripple-effect {
+  width: 200rpx;
+  height: 200rpx;
+  opacity: 1;
+}
+
+/* 选中状态的奢华设计 */
+.tags-grid .tag-item.selected {
+  border-color: #6366F1 !important;
+  background: linear-gradient(135deg, #6366F1, #4F46E5, #7C3AED) !important;
+  color: white !important;
+  box-shadow:
+    0 8rpx 24rpx rgba(99, 102, 241, 0.4),
+    0 4rpx 8rpx rgba(99, 102, 241, 0.3),
+    inset 0 -2rpx 4rpx rgba(0, 0, 0, 0.1),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.06) !important;
+  animation: tagLuxuryPulse 3s ease-in-out infinite;
+  font-weight: 600;
+}
+
+/* 选中标签的文字效果 */
+.tag-item.selected .tag-text {
+  text-shadow:
+    0 1rpx 2rpx rgba(0, 0, 0, 0.2),
+    0 0 8rpx rgba(255, 255, 255, 0.3);
+  letter-spacing: 1rpx;
+}
+
+/* 选中状态的宝石光泽效果 */
+.tag-item.selected::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle,
+    rgba(255, 255, 255, 0.8) 0%,
+    rgba(255, 255, 255, 0.3) 30%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: gemShimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* 更奢华的脉冲动画 */
+@keyframes tagLuxuryPulse {
+  0%, 100% {
+    box-shadow:
+      0 8rpx 24rpx rgba(99, 102, 241, 0.4),
+      0 4rpx 8rpx rgba(99, 102, 241, 0.3),
+      inset 0 -2rpx 4rpx rgba(0, 0, 0, 0.1),
+      inset 0 2rpx 4rpx rgba(255, 255, 255, 0.2);
+    transform: scale(1.06);
+  }
+  50% {
+    box-shadow:
+      0 12rpx 32rpx rgba(99, 102, 241, 0.6),
+      0 8rpx 16rpx rgba(99, 102, 241, 0.4),
+      inset 0 -2rpx 6rpx rgba(0, 0, 0, 0.15),
+      inset 0 2rpx 6rpx rgba(255, 255, 255, 0.25),
+      0 0 0 4rpx rgba(99, 102, 241, 0.1);
+    transform: scale(1.08);
+  }
+}
+
+/* 宝石闪烁效果 */
+@keyframes gemShimmer {
+  0%, 100% {
+    opacity: 0.8;
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    opacity: 0.4;
+    transform: translateX(-5rpx) translateY(-3rpx);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(3rpx) translateY(-5rpx);
+  }
+  75% {
+    opacity: 0.5;
+    transform: translateX(-3rpx) translateY(-2rpx);
+  }
+}
+
+@keyframes tagPulse {
+  0% {
+    box-shadow: 0 4rpx 12rpx rgba(66, 153, 225, 0.3);
+  }
+  50% {
+    box-shadow: 0 4rpx 20rpx rgba(66, 153, 225, 0.5);
+  }
+  100% {
+    box-shadow: 0 4rpx 12rpx rgba(66, 153, 225, 0.3);
+  }
+}
+
+.generate-btn {
+  width: 100%;
+  height: 90rpx;
+  border-radius: 45rpx;
+  font-size: 32rpx;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+.generate-btn:active::before {
+  width: 300rpx;
+  height: 300rpx;
+}
+.generate-btn:active {
+  transform: scale(0.95);
+}
+.generate-btn.disabled {
+  background: #CBD5E0; /* Light gray */
+  color: #A0AEC0; /* Gray text */
+  transition: none;
+}
+.generate-btn.active {
+  background: linear-gradient(135deg, #667EEA, #5A67D8); /* Modern purple gradient */
+  color: white;
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+  animation: btnGlow 3s ease-in-out infinite;
+}
+
+@keyframes btnGlow {
+  0%, 100% {
+    box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 6rpx 24rpx rgba(102, 126, 234, 0.5);
+  }
+}
+
+.rating-section {
+  margin-bottom: 30rpx;
+}
+
+.rating-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #1A202C;
+  margin-bottom: 20rpx;
+}
+
+.rating-stars {
+  display: flex;
+  justify-content: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.star {
+  font-size: 60rpx;
+  color: #CBD5E0; /* Light gray for inactive stars */
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: pointer;
+}
+
+.star:active {
+  transform: scale(1.2) rotate(72deg);
+}
+
+.star.active {
+  color: #F6E05E; /* Warm gold for active stars */
+  animation: starTwinkle 1s ease-in-out;
+}
+
+.rating-text {
+  text-align: center;
+  font-size: 28rpx;
+  color: #718096; /* Medium gray */
+}
+
+@keyframes starTwinkle {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

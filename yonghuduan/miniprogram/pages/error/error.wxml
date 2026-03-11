@@ -1,0 +1,105 @@
+<!--error.wxml - 优化后的错误页面-->
+<view class="error-page">
+  <view class="error-container">
+    <!-- 背景装饰 -->
+    <view class="error-bg-decoration"></view>
+
+    <!-- 错误图标 -->
+    <view class="error-icon-wrapper">
+      <view class="error-icon-emoji">⚠️</view>
+    </view>
+
+    <!-- 错误信息 -->
+    <view class="error-content-wrapper">
+      <!-- 二维码无效 -->
+      <view class="error-content" wx:if="{{code === 'INVALID_QR'}}">
+        <view class="error-icon-small">📱</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">二维码无效</view>
+          <view class="error-desc">请联系商家获取正确的二维码</view>
+        </view>
+      </view>
+
+      <!-- merchant_id不存在 -->
+      <view class="error-content" wx:elif="{{code === 'MERCHANT_NOT_FOUND'}}">
+        <view class="error-icon-small">🏪</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">商家不存在</view>
+          <view class="error-desc">请确认二维码是否正确，或联系商家</view>
+        </view>
+      </view>
+
+      <!-- 商家已打烊 -->
+      <view class="error-content" wx:elif="{{code === 'MERCHANT_CLOSED'}}">
+        <view class="error-icon-small">🚪</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">该商家暂时歇业</view>
+          <view class="error-desc">请稍后再试，或联系商家了解营业时间</view>
+        </view>
+      </view>
+
+      <!-- 网络错误 -->
+      <view class="error-content" wx:elif="{{code === 'NETWORK_ERROR'}}">
+        <view class="error-icon-small">📡</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">网络连接失败</view>
+          <view class="error-desc">请检查网络设置后重试</view>
+        </view>
+      </view>
+
+      <!-- 无数据 -->
+      <view class="error-content" wx:elif="{{code === 'NO_DATA'}}">
+        <view class="error-icon-small">📦</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">暂无数据</view>
+          <view class="error-desc">该商家暂未上架商品</view>
+        </view>
+      </view>
+
+      <!-- 通用错误 -->
+      <view class="error-content" wx:else>
+        <view class="error-icon-small">⚠️</view>
+        <view class="error-text-wrapper">
+          <view class="error-title">系统错误</view>
+          <view class="error-desc">{{message || '请稍后重试'}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-buttons">
+      <button
+        class="retry-btn"
+        wx:if="{{canRetry}}"
+        bindtap="onRetry"
+        hover-class="retry-btn-hover"
+      >
+        <view class="btn-icon">🔄</view>
+        <view class="btn-text">重新加载</view>
+      </button>
+
+      <button
+        class="back-btn"
+        wx:if="{{canGoBack}}"
+        bindtap="onGoBack"
+        hover-class="back-btn-hover"
+      >
+        <view class="btn-icon">←</view>
+        <view class="btn-text">返回</view>
+      </button>
+    </view>
+
+    <!-- 底部提示 -->
+    <view class="error-footer" wx:if="{{showFooter}}">
+      <view class="footer-tip">
+        需要帮助？
+      </view>
+      <button
+        class="contact-btn"
+        bindtap="onContactSupport"
+      >
+        联系客服
+      </button>
+    </view>
+  </view>
+</view>

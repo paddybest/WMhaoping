@@ -1,0 +1,57 @@
+<view class="container">
+  <view class="header">
+    <view class="step-indicator">
+      <view class="step completed">
+        <view class="step-circle">1</view>
+        <text class="step-text">生成评价</text>
+      </view>
+      <view class="step-line completed"></view>
+      <view class="step active">
+        <view class="step-circle">2</view>
+        <text class="step-text">提交审核</text>
+      </view>
+      <view class="step-line"></view>
+      <view class="step">
+        <view class="step-circle">3</view>
+        <text class="step-text">领取奖励</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="section">
+      <view class="section-title">上传评价截图</view>
+      <view class="section-desc">请在美团/饿了么完成评价后，截图上传</view>
+      
+      <view class="upload-area" bindtap="onChooseImage">
+        <view class="upload-box" wx:if="{{!screenshotUrl}}">
+          <view class="upload-icon">+</view>
+          <text class="upload-text">点击上传截图</text>
+        </view>
+        <image 
+          wx:else 
+          class="preview-image" 
+          src="{{screenshotUrl}}" 
+          mode="aspectFit"
+          bindtap="onPreviewImage"
+        />
+      </view>
+      
+      <view class="tips">
+        <view class="tip-title">截图要求：</view>
+        <view class="tip-item">1. 截图需包含完整的评价内容</view>
+        <view class="tip-item">2. 截图需显示评价成功状态</view>
+        <view class="tip-item">3. 确保截图清晰可辨认</view>
+      </view>
+    </view>
+
+    <view class="section">
+      <button class="submit-btn {{!screenshotUrl ? 'disabled' : ''}}" 
+              bindtap="onSubmit" 
+              disabled="{{!screenshotUrl || submitting}}">
+        {{submitting ? '审核中...' : '提交审核'}}
+      </button>
+      <view class="skip-link" bindtap="onViewGuide">不知道怎么操作？查看教程</view>
+    </view>
+  </view>
+</view>

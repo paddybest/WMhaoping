@@ -1,0 +1,44 @@
+<view class="login-container">
+  <view class="login-header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit" />
+    <text class="title">欢迎使用</text>
+    <text class="subtitle">登录后可享受更多服务</text>
+  </view>
+
+  <view class="login-content">
+    <!-- 已登录状态 -->
+    <view wx:if="{{loggedIn}}" class="logged-in">
+      <view class="success-icon">✓</view>
+      <text class="success-text">登录成功</text>
+      <text class="phone-text">{{phoneNumber}}</text>
+    </view>
+
+    <!-- 未登录状态 -->
+    <view wx:else class="login-form">
+      <button
+        class="phone-btn"
+        open-type="getPhoneNumber"
+        bindgetphonenumber="onGetPhoneNumber"
+        loading="{{loading}}"
+      >
+        <text class="btn-icon">📱</text>
+        <text class="btn-text">手机号一键登录</text>
+      </button>
+
+      <view class="divider">
+        <view class="divider-line"></view>
+        <text class="divider-text">或</text>
+        <view class="divider-line"></view>
+      </view>
+
+      <button class="skip-btn" bindtap="onSkipLogin">暂不登录，先看看</button>
+    </view>
+  </view>
+
+  <view class="login-footer">
+    <text class="agreement-text">登录即表示同意</text>
+    <text class="link-text">《用户协议》</text>
+    <text class="agreement-text">和</text>
+    <text class="link-text">《隐私政策》</text>
+  </view>
+</view>

@@ -1,0 +1,412 @@
+抽奖界面技术需求文档
+一、项目背景
+当前AI评价助手小程序的抽奖功能在结果页(result)中以简单弹窗形式展示奖励码，缺乏互动性和视觉吸引力。为提升用户体验和参与感，需要设计一个独立的抽奖页面，通过动画效果和增强的交互流程来展示奖励。
+
+二、设计目标
+创建沉浸式抽奖体验 - 独立页面展示抽奖流程
+增强用户互动 - 通过动画和音效提升参与感
+清晰的用户引导 - 明确的奖励领取流程
+无缝集成 - 与现有奖励码系统无缝对接
+三、技术方案概述
+3.1 核心实现思路
+当前流程: result页 → 弹窗显示奖励码 → 用户复制
+新流程: result页 → 抽奖页 → 转盘动画 → 结果展示 → 用户操作
+
+3.2 技术架构
+
+┌─────────────┐      ┌──────────────┐      ┌──────────────┐
+│  结果页      │ ───> │  抽奖页       │ ───> │  客服添加     │
+│  (result)   │ 跳转  │  (lottery)   │ 展示  │  (微信)       │
+└─────────────┘      └──────────────┘      └──────────────┘
+                          │
+                          ├─ 云函数调用(已完成)
+                          ├─ 转盘动画
+                          ├─ 奖励码展示
+                          └─ 用户交互
+四、文件结构
+4.1 需要新建的文件
+
+miniprogram/
+├── pages/lottery/                    # 新增抽奖页面
+│   ├── index.js                      # 页面逻辑
+│   ├── index.wxml                    # 页面结构
+│   ├── index.wxss                    # 页面样式
+│   └── index.json                    # 页面配置
+└── components/lottery-wheel/         # 新增转盘组件
+    ├── lottery-wheel.js
+    ├── lottery-wheel.wxml
+    ├── lottery-wheel.wxss
+    └── lottery-wheel.json
+4.2 需要修改的文件
+
+miniprogram/
+├── pages/result/index.js             # 修改getRewardCode跳转逻辑
+└── app.json                          # 添加lottery页面路由
+五、核心功能实现
+5.1 抽奖页面状态管理
+
+// pages/lottery/index.js
+Page({
+  data: {
+    lotteryStatus: 'ready',           // ready | spinning | result | claimed
+    isSpinning: false,
+    rewardCode: '',                   // 从云函数获取的验证码
+    currentRotation: 0,               // 转盘当前角度
+    showConfetti: false,              // 庆祝动画
+    customerServiceQR: '/images/customer-service-qrcode.png',
+    errorMessage: ''
+  }
+})
+5.2 关键方法
+方法名	功能	说明
+onLoad(options)	页面加载	接收从result页传来的奖励码
+onSpinButtonClick()	开始抽奖	触发转盘旋转动画
+calculateWheelRotation()	计算角度	计算转盘目标旋转角度
+showLotteryResult()	展示结果	显示奖励码和庆祝动画
+onCopyCode()	复制奖励码	复制到剪贴板并提示
+navigateToResult()	返回结果页	导航回result页面
+5.3 抽奖流程代码示例
+
+// 开始抽奖
+async onSpinButtonClick() {
+  if (this.data.isSpinning) return
+
+  this.setData({ isSpinning: true, lotteryStatus: 'spinning' })
+
+  // 计算旋转角度(必定停在奖励码位置)
+  const baseRotation = 1800  // 5圈
+  const targetAngle = 180    // 奖励码位置
+  const randomOffset = Math.floor(Math.random() * 20) - 10
+  const rotation = baseRotation + targetAngle + randomOffset
+
+  this.setData({ currentRotation: rotation })
+
+  // 等待动画完成
+  await new Promise(resolve => setTimeout(resolve, 3500))
+
+  // 展示结果
+  this.showLotteryResult()
+}
+
+// 展示结果
+showLotteryResult() {
+  this.setData({
+    isSpinning: false,
+    lotteryStatus: 'result',
+    showConfetti: true
+  })
+
+  // 震动反馈
+  wx.vibrateShort({ type: 'heavy' })
+
+  // 3秒后清除彩带
+  setTimeout(() => {
+    this.setData({ showConfetti: false })
+  }, 3000)
+}
+
+// 复制奖励码
+onCopyCode() {
+  wx.setClipboardData({
+    data: this.data.rewardCode,
+    success: () => {
+      wx.showToast({ title: '奖励码已复制', icon: 'success' })
+      this.setData({ lotteryStatus: 'claimed' })
+    }
+  })
+}
+六、页面结构(WXML)
+
+<!-- pages/lottery/index.wxml -->
+<view class="lottery-container">
+  <!-- 标题区 -->
+  <view class="header-section">
+    <text class="title">恭喜获得抽奖机会</text>
+  </view>
+
+  <!-- 转盘区域 -->
+  <view class="wheel-section">
+    <lottery-wheel
+      rotation="{{currentRotation}}"
+      isSpinning="{{isSpinning}}"
+    />
+    <button class="spin-btn" bindtap="onSpinButtonClick" disabled="{{isSpinning}}">
+      {{isSpinning ? '抽奖中...' : '开始抽奖'}}
+    </button>
+  </view>
+
+  <!-- 结果展示 -->
+  <view class="result-section" wx:if="{{lotteryStatus === 'result' || lotteryStatus === 'claimed'}}">
+    <view class="prize-card">
+      <text class="prize-title">恭喜中奖!</text>
+      <view class="code-display">
+        <text>{{rewardCode}}</text>
+        <button size="mini" bindtap="onCopyCode">复制</button>
+      </view>
+      <view class="action-buttons">
+        <button bindtap="onAddCustomerService" open-type="addContact">
+          去添加客服领取
+        </button>
+        <button bindtap="navigateToResult">返回结果页</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 彩带动画 -->
+  <view class="confetti-layer" wx:if="{{showConfetti}}">
+    <image wx:for="{{[1,2,3,4,5]}}" class="confetti-piece" src="/images/confetti.png" />
+  </view>
+</view>
+七、样式设计(WXSS)
+
+/* pages/lottery/index.wxss */
+.lottery-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-section .title {
+  font-size: 48rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 60rpx;
+}
+
+.wheel-section {
+  position: relative;
+  margin-bottom: 60rpx;
+}
+
+.spin-btn {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  color: white;
+  font-size: 32rpx;
+  border: none;
+  box-shadow: 0 10rpx 30rpx rgba(255, 107, 107, 0.4);
+}
+
+.spin-btn.disabled {
+  background: #666;
+  box-shadow: none;
+}
+
+.prize-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  width: 90%;
+  animation: prizePopUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes prizePopUp {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.code-display {
+  background: #f0f9f4;
+  padding: 30rpx;
+  border-radius: 10rpx;
+  text-align: center;
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #07c160;
+  letter-spacing: 8rpx;
+  margin: 30rpx 0;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  animation: confettiFall 3s ease-in forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+八、转盘组件实现
+
+// components/lottery-wheel/lottery-wheel.js
+Component({
+  properties: {
+    rotation: { type: Number, value: 0 },
+    isSpinning: { type: Boolean, value: false }
+  }
+})
+
+<!-- components/lottery-wheel/lottery-wheel.wxml -->
+<view class="wheel-container">
+  <view class="wheel-body" style="transform: rotate({{rotation}}deg); transition: transform {{isSpinning ? 3.5 : 0}}s cubic-bezier(0.25, 0.1, 0.25, 1);">
+    <!-- 转盘分段 -->
+    <view class="segment segment-1">
+      <text class="segment-label">6位奖励码</text>
+    </view>
+    <view class="segment segment-2">
+      <text class="segment-label">谢谢参与</text>
+    </view>
+    <view class="wheel-center"></view>
+  </view>
+  <!-- 指针 -->
+  <view class="pointer"></view>
+</view>
+九、数据流集成
+9.1 修改result页面跳转逻辑
+文件: c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\pages\result\index.js
+
+修改位置: 第174行 getRewardCode() 方法
+
+
+async getRewardCode() {
+  try {
+    wx.showLoading({ title: '生成奖励中...' })
+
+    const app = getApp()
+    const res = await wx.cloud.callFunction({
+      name: 'createLotteryCode',
+      data: {
+        openid: app.globalData.openid || wx.getStorageSync('openid')
+      }
+    })
+
+    wx.hideLoading()
+
+    if (res.result.success) {
+      const rewardCode = res.result.data.code
+
+      // 修改:跳转到抽奖页面
+      wx.navigateTo({
+        url: `/pages/lottery/index?code=${rewardCode}&from=result`,
+        fail: (err) => {
+          // 降级方案:跳转失败显示弹窗
+          console.error('跳转失败:', err)
+          this.setData({ rewardCode, showModal: true })
+        }
+      })
+    }
+  } catch (error) {
+    wx.hideLoading()
+    wx.showToast({ title: '获取奖励失败', icon: 'none' })
+  }
+}
+9.2 抽奖页面接收数据
+
+// pages/lottery/index.js
+Page({
+  onLoad(options) {
+    if (options.code) {
+      this.setData({
+        rewardCode: decodeURIComponent(options.code),
+        lotteryStatus: 'ready'
+      })
+    } else {
+      this.setData({
+        errorMessage: '未获取到奖励信息',
+        lotteryStatus: 'error'
+      })
+    }
+  }
+})
+十、路由配置
+文件: c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\app.json
+
+
+{
+  "pages": [
+    "pages/index/index",
+    "pages/result/index",
+    "pages/lottery/index"
+  ]
+}
+十一、关键文件清单
+需要新建的文件
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\pages\lottery\index.js
+
+抽奖页面核心逻辑
+实现抽奖流程控制
+处理用户交互
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\pages\lottery\index.wxml
+
+抽奖页面结构
+转盘和结果展示UI
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\pages\lottery\index.wxss
+
+抽奖页面样式
+动画效果实现
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\components\lottery-wheel\lottery-wheel.js
+
+转盘组件逻辑
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\components\lottery-wheel\lottery-wheel.wxml
+
+转盘组件结构
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\components\lottery-wheel\lottery-wheel.wxss
+
+转盘组件样式
+需要修改的文件
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\pages\result\index.js
+
+修改getRewardCode()方法(约第174行)
+将弹窗显示改为跳转到抽奖页面
+c:\Users\38429\WeChatProjects\miniprogram-6\miniprogram\app.json
+
+添加pages/lottery/index到pages数组
+十二、验证测试
+测试步骤
+从首页开始完整流程
+
+选择类目 → 选择标签 → 生成评价 → 保存所有图片
+验证跳转
+
+确认从result页跳转到lottery页
+奖励码正确传递
+测试抽奖功能
+
+点击"开始抽奖"按钮
+转盘旋转动画流畅
+停在正确位置
+测试结果展示
+
+奖励码正确显示
+复制功能正常
+客服按钮可触发
+测试返回功能
+
+返回结果页正常
+异常测试
+
+跳转失败时降级到弹窗
+十三、实施优先级
+P0 (核心功能)
+
+抽奖页面基础结构
+转盘旋转动画
+奖励码显示和复制
+从result页跳转
+P1 (增强功能)
+
+彩带庆祝动画
+震动反馈
+返回导航
+P2 (可选功能)
+
+音效
+闪光效果
+音效开关
+十四、注意事项
+复用现有云函数 - createLotteryCode无需修改
+降级方案 - 如果跳转失败,回退到原有弹窗
+性能优化 - 使用CSS3 transform实现动画(GPU加速)
+兼容性 - 测试iOS和Android不同设备
+十五、参考资源
+现有云函数: cloudfunctions/createLotteryCode/index.js
+现有结果页: miniprogram/pages/result/
+微信小程序动画文档: https://developers.weixin.qq.com/miniprogram/dev/framework/view/wxs/animation.html

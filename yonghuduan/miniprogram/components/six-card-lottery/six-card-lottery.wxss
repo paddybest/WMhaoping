@@ -1,0 +1,263 @@
+/* 六宫格布局 */
+.prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.prize-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10rpx);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+  border: 3rpx solid transparent;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.prize-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.prize-card.highlight::before {
+  opacity: 1;
+}
+
+.prize-card.highlight {
+  border-color: #F687B3;
+  transform: scale(1.05);
+  box-shadow: 0 8rpx 24rpx rgba(246, 135, 179, 0.4);
+  animation: pulse 0.5s ease-in-out;
+}
+
+.prize-card.selected {
+  border-color: #10B981;
+  background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+  animation: winnerGlow 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1.05);
+    box-shadow: 0 8rpx 24rpx rgba(246, 135, 179, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 8rpx 32rpx rgba(246, 135, 179, 0.6);
+  }
+}
+
+@keyframes winnerGlow {
+  0%, 100% {
+    box-shadow: 0 8rpx 24rpx rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 8rpx 40rpx rgba(16, 185, 129, 0.8);
+  }
+}
+
+.prize-image {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 16rpx;
+  border-radius: 12rpx;
+}
+
+.prize-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1A202C;
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.prize-desc {
+  font-size: 24rpx;
+  color: #718096;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* 按钮样式 */
+.action-area {
+  padding: 0 30rpx;
+}
+
+.start-btn {
+  width: 100%;
+  height: 88rpx;
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  color: white;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.start-btn:active:not(.disabled) {
+  transform: scale(0.98);
+}
+
+.start-btn.disabled {
+  background: #CBD5E0;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+/* 结果弹窗 */
+.result-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 24rpx;
+  padding: 40rpx;
+  max-width: 600rpx;
+  width: 90%;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100rpx);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.result-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.result-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1A202C;
+}
+
+.result-body {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.result-image {
+  width: 160rpx;
+  height: 160rpx;
+  margin: 0 auto 20rpx;
+  border-radius: 20rpx;
+}
+
+.result-prize-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1A202C;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+.result-prize-desc {
+  font-size: 28rpx;
+  color: #718096;
+  line-height: 1.5;
+  margin-bottom: 30rpx;
+  display: block;
+}
+
+.code-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F7FAFC;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.code-label {
+  font-size: 28rpx;
+  color: #4A5568;
+  margin-right: 12rpx;
+}
+
+.code-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #2D3748;
+  letter-spacing: 4rpx;
+  flex: 1;
+}
+
+.copy-btn {
+  background: #667EEA;
+  color: white;
+  border: none;
+  border-radius: 8rpx;
+  padding: 8rpx 16rpx;
+  font-size: 24rpx;
+  margin-left: 16rpx;
+}
+
+.result-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
+  color: white;
+}
+
+.action-btn.primary:active {
+  transform: scale(0.98);
+}

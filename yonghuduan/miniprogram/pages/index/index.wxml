@@ -1,0 +1,51 @@
+<wxs src="index.wxs" module="tools" />
+
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <text class="title">智能评价助手</text>
+    <text class="subtitle">智能生成高质量商品评论</text>
+  </view>
+
+  <!-- Tags Card -->
+  <view class="card tags-card" wx:if="{{productName}}">
+    <view class="card-header">
+      <text class="card-title">商品：{{productName}}</text>
+    </view>
+  </view>
+
+  <!-- Tags Card -->
+  <view class="card tags-card">
+    <view class="card-header">
+      <text class="card-title">选择评价标签</text>
+    </view>
+    <view class="tags-grid">
+      <view
+        class="tag-item {{tools.contains(selectedTags, item) ? 'selected' : ''}}"
+        wx:for="{{currentTags}}"
+        wx:key="*this"
+        data-tag="{{item}}"
+        bindtap="onTagToggle"
+      >
+        <text class="tag-text">{{item}}</text>
+        <text class="tag-check" wx:if="{{tools.contains(selectedTags, item)}}">✓</text>
+      </view>
+    </view>
+    <view class="empty-tags" wx:if="{{currentTags.length === 0 && !loading}}">
+      <text>暂无标签，请稍后再试</text>
+    </view>
+  </view>
+
+  <!-- Action Button -->
+  <view class="card generate-card">
+    <button
+      class="generate-btn {{canGenerate ? 'active' : 'disabled'}}"
+      bindtap="onGenerate"
+      disabled="{{!canGenerate || loading}}"
+      loading="{{loading}}"
+    >
+      <text class="btn-text" wx:if="{{!loading}}">智能生成评价</text>
+      <text class="btn-loading" wx:else>生成中...</text>
+    </button>
+  </view>
+</view>

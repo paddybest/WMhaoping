@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Error>
+  <Code>AccessDenied</Code>
+  <Message>The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.</Message>
+  <RequestId>6997976BF7C44F343504CE8B</RequestId>
+  <HostId>your-oss-bucket.oss-cn-hangzhou.aliyuncs.com</HostId>
+  <Bucket>your-oss-bucket</Bucket>
+  <Endpoint>oss-cn-shanghai.aliyuncs.com</Endpoint>
+  <EC>0003-00001403</EC>
+  <RecommendDoc>https://api.aliyun.com/troubleshoot?q=0003-00001403</RecommendDoc>
+</Error>

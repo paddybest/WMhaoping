@@ -1,0 +1,123 @@
+
+## 一、前后端数据接口清单（RESTful API）
+
+以下接口基于 Flask 后端设计，采用 JWT 认证（除登录接口外），所有接口响应格式统一为 JSON。
+
+### 1. 认证与商家管理
+
+| 接口名称 | 方法 | URL | 请求参数 | 返回数据 | 权限 |
+|---------|------|-----|---------|---------|------|
+| 商家登录 | POST | `/api/auth/merchant/login` | `{ "username": "xxx", "password": "xxx" }` | `{ "access_token": "xxx", "merchant_info": {...} }` | 公开 |
+| 刷新令牌 | POST | `/api/auth/refresh` | 头: Authorization: Bearer <token> | `{ "access_token": "xxx" }` | 已登录商家 |
+| 获取商家信息 | GET | `/api/merchant/profile` | 无 | `{ "id": "...", "name": "...", "contact": "...", "phone": "..." }` | 商家 |
+| 更新商家信息 | PUT | `/api/merchant/profile` | `{ "name": "...", "contact": "...", "phone": "..." }` | 更新后的商家信息 | 商家 |
+
+### 2. 商品管理
+
+| 接口名称 | 方法 | URL | 请求参数 | 返回数据 | 权限 |
+|---------|------|-----|---------|---------|------|
+| 获取类目列表 | GET | `/api/categories` | 可选: `?page=1&per_page=20` | `{ "total": 100, "items": [ {...} ] }` | 商家 |
+| 创建类目 | POST | `/api/categories` | `{ "name": "类目名" }` | 新建的类目对象 | 商家 |
+| 更新类目 | PUT | `/api/categories/{id}` | `{ "name": "新名称" }` | 更新后的类目对象 | 商家 |
+| 删除类目 | DELETE | `/api/categories/{id}` | 无 | `{ "message": "删除成功" }` | 商家（需检查无关联标签） |
+
+### 3. 标签管理
+
+| 接口名称 | 方法 | URL | 请求参数 | 返回数据 | 权限 |
+|---------|------|-----|---------|---------|------|
+| 获取标签列表 | GET | `/api/tags` | 可选: `?category_id=xxx&page=1` | 标签列表（可分页） | 商家 |
+| 创建标签 | POST | `/api/tags` | `{ "name": "标签名", "category_id": "xxx" }` | 新建的标签对象 | 商家 |
+| 更新标签 | PUT | `/api/tags/{id}` | `{ "name": "新标签名", "category_id": "xxx" }` | 更新后的标签对象 | 商家 |
+| 删除标签 | DELETE | `/api/tags/{id}` | 无 | `{ "message": "删除成功" }` | 商家（需检查是否被评价引用） |
+
+### 4. 抽奖管理
+
+| 接口名称 | 方法 | URL | 请求参数 | 返回数据 | 权限 |
+|---------|------|-----|---------|---------|------|
+| 获取奖品列表 | GET | `/api/prizes` | 可选: `?page=1` | 奖品列表 | 商家 |
+| 创建奖品 | POST | `/api/prizes` | `{ "name": "奖品名", "image": "url" }` | 新建奖品对象 | 商家 |
+| 更新奖品 | PUT | `/api/prizes/{id}` | `{ "name": "...", "image": "..." }` | 更新后的奖品 | 商家 |
+| 删除奖品 | DELETE | `/api/prizes/{id}` | 无 | `{ "message": "删除成功" }` | 商家（需检查关联的兑换码） |
+| 获取兑换码列表 | GET | `/api/codes` | 可选: `?prize_id=xxx&status=active&page=1` | 兑换码列表 | 商家 |
+| 批量导入兑换码 | POST | `/api/codes/batch` | `{ "prize_id": "xxx", "codes": ["code1","code2"] }` | `{ "imported": 2, "failed": 0 }` | 商家 |
+| 获取抽奖记录 | GET | `/api/lottery-records` | 可选: `?user_id=xxx&prize_id=xxx&start_date=&end_date=&page=1` | 抽奖记录列表 | 商家 |
+
+### 5. 数据统计
+
+| 接口名称 | 方法 | URL | 请求参数 | 返回数据 | 权限 |
+|---------|------|-----|---------|---------|------|
+| 获取仪表盘数据 | GET | `/api/dashboard` | 无 | `{ "user_count": 100, "evaluation_count": 500, "lottery_count": 30, "today_evaluations": 10, ... }` | 商家 |
+| 获取评价趋势 | GET | `/api/statistics/evaluations` | `?start_date=&end_date=&interval=day` | 按时间统计的评价数量 | 商家 |
+| 获取抽奖统计 | GET | `/api/statistics/lottery` | `?start_date=&end_date=` | 抽奖参与人数、中奖人数等 | 商家 |
+
+### 6. WebSocket 实时事件
+
+商家端应通过 WebSocket 连接接收以下推送（使用 Socket.IO 或原生 WebSocket）：
+
+- 连接地址：`wss://your-domain.com/socket.io/`（需带上 JWT 认证）
+- 加入房间：连接成功后自动加入 `merchant_{merchant_id}` 房间
+- 监听事件：
+  - `lottery_notification`：当有用户中奖时触发（可广播或仅推送商家）。
+  - `user_joined`：新用户关注/注册时推送（可选）。
+
+---
+
+## 二、AI 生成网页版商家端及对应后端的注意事项
+
+利用 AI（如 Google AI Studio）生成代码时，请留意以下要点，确保生成的代码能与现有系统无缝对接且安全可靠。
+
+### 1. 数据模型一致性
+- **严格遵循文档中的统一数据模型**：确保后端代码中定义的模型字段、类型、关系与文档完全一致，特别是主键类型（String(64)）、外键关联、字段名等。
+- **数据库迁移**：如果使用 Flask-SQLAlchemy，需生成对应的迁移脚本（如 Alembic），并注意 SQLite 的兼容性（SQLite 对 ALTER TABLE 支持有限，建议预先定义好模型）。
+
+### 2. 认证与授权
+- **JWT 认证**：后端需集成 Flask-JWT-Extended，所有商家端接口（除登录外）都要加上 `@jwt_required()` 装饰器，并从 token 中提取 `merchant_id` 进行数据隔离（确保商家只能操作自己的数据）。
+- **商家登录机制**：文档中商家模型没有密码字段，需要补充：要么增加 `password_hash` 字段（存储 bcrypt 哈希），要么采用手机验证码登录。建议 AI 生成时设计一个简单的 `merchant_auth` 表或直接在 Merchant 模型中添加字段。
+- **微信 OAuth 对接**：商家端如果是通过微信扫码登录（商家版小程序），则需对接微信网页授权，但文档中未明确，通常商家管理后台更适合账号密码登录。需与需求方确认。
+
+### 3. API 设计与安全
+- **统一响应格式**：所有接口返回格式建议统一为 `{ "code": 200, "message": "success", "data": ... }`，便于前端处理错误。
+- **输入验证**：对请求参数进行严格校验（如长度、格式），防止 SQL 注入或 XSS 攻击。可使用 Marshmallow 或 Pydantic 进行序列化与验证。
+- **CORS 配置**：由于商家端是独立网页，需在 Flask 中配置 CORS，允许商家端域名访问。
+- **环境变量**：敏感信息（数据库 URL、JWT 密钥、微信 AppSecret、AI 服务密钥）必须通过环境变量注入，切勿硬编码。
+
+### 4. AI 功能集成
+- **调用 AI 生成好评**：商家端需要调用生成示例评价的接口（如 `/api/evaluations/generate`），该接口内部应调用你在 Google AI Studio 部署的 AI 服务（需使用 API 密钥）。
+- **AI 服务封装**：建议在后端将 AI 调用封装成一个独立的服务模块，便于替换或升级模型。同时做好错误处理和超时控制。
+- **提示词管理**：如果提示词需要根据不同场景调整，可将提示词模板存储在数据库或配置文件中，方便商家自定义（如好评风格）。
+
+### 5. 实时同步（WebSocket）
+- **Socket.IO 集成**：在 Flask 中集成 Flask-SocketIO，并在连接时验证 JWT（通过 `@socketio.on('connect')` 中手动校验 token）。
+- **房间管理**：商家连接后，根据 token 中的 `merchant_id` 将其加入 `merchant_{merchant_id}` 房间，以便推送消息。
+- **前端接入**：商家端网页需引入 Socket.IO 客户端库，并在登录成功后建立连接，监听事件更新 UI（如新评价弹窗提示）。
+
+### 6. 性能与缓存
+- **数据库索引**：确保模型定义中包含文档建议的索引字段（如 `user_merchant`、`evaluation_user` 等），AI 生成的代码应通过 `__table_args__` 添加索引。
+- **Redis 缓存**：在查询频繁且数据变化不频繁的接口（如类目列表、标签列表）上使用 Redis 缓存，减轻数据库压力。需注意缓存失效策略。
+- **分页与过滤**：列表接口必须支持分页（page/per_page）和过滤参数，防止一次返回过多数据。
+
+### 7. 权限控制（RBAC）
+- 文档中提及的 RBAC 权限系统需要实现。商家端用户角色可能包括超级管理员、普通管理员等。AI 生成时应考虑在 JWT 的 additional_claims 中包含角色信息，并在接口层用装饰器检查权限。
+- 例如：`@require_permission(Permission.USER_MANAGE)` 装饰器，根据当前用户角色判断是否有权访问。
+
+### 8. 前端（商家端网页）开发注意事项
+- **技术栈选择**：如果 AI 生成前端，建议使用 Vue.js + Element Plus 或 React + Ant Design，这些组件库成熟且与 AI 生成代码兼容性好。
+- **状态管理**：使用 Vuex/Pinia 或 Redux 管理登录状态、商家信息、缓存数据等。
+- **路由守卫**：实现路由守卫，未登录时跳转登录页。
+- **API 调用封装**：统一封装 axios 请求，自动附加 JWT token，统一处理错误码。
+- **响应式设计**：确保页面在 PC 端和移动端都有良好体验。
+
+### 9. 测试与部署
+- **单元测试**：AI 生成代码后，建议编写基本的单元测试（如登录、CRUD 接口）确保功能正常。
+- **数据迁移脚本**：准备数据迁移脚本，将现有小程序云开发中的数据迁移到新 SQL 数据库。
+- **部署架构**：按照文档中的部署架构图配置 Nginx 反向代理、Gunicorn 运行 Flask、Redis 和 SQLite 文件权限等。
+- **日志与监控**：集成日志记录（如 Flask 的 logging）和监控接口（如 `/metrics` 暴露 Prometheus 指标），便于排查问题。
+
+### 10. 其他注意事项
+- **API 版本控制**：建议在 URL 中加入版本前缀，如 `/api/v1/`，便于未来升级。
+- **文档与注释**：AI 生成的代码应有清晰的注释，特别是模型关系和业务逻辑部分。
+- **与现有小程序的兼容**：确保新后端提供的接口小程序端也能调用（尤其是用户端接口如登录、生成评价、抽奖等），可能需要同时暴露用户端 API 和商家端 API（可通过不同前缀区分，如 `/api/user/` 和 `/api/admin/`）。
+
+---
+
+通过以上接口清单和注意事项，你可以指导 AI 生成出结构清晰、安全可靠的商家管理端及后端代码，并与现有小程序实现无缝对接。如果有具体的技术栈偏好或需要进一步细化某个接口，请随时告知。

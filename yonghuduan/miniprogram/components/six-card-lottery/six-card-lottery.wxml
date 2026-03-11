@@ -1,0 +1,56 @@
+<view class="lottery-container">
+  <!-- 六宫格布局 -->
+  <view class="prizes-grid">
+    <view
+      wx:for="{{prizes}}"
+      wx:key="id"
+      class="prize-card {{isAnimating && currentIndex === index ? 'highlight' : ''}} {{selectedPrizeId === item.id ? 'selected' : ''}}"
+      style="animation-delay: {{index * 0.1}}s"
+    >
+      <image class="prize-image" src="{{item.image}}" mode="aspectFit" />
+      <text class="prize-name">{{item.name}}</text>
+      <text class="prize-desc" wx:if="{{item.description}}">{{item.description}}</text>
+    </view>
+  </view>
+
+  <!-- 开始抽奖按钮 -->
+  <view class="action-area">
+    <button
+      class="start-btn {{isAnimating ? 'disabled' : ''}}"
+      bindtap="onStartDraw"
+      disabled="{{isAnimating}}"
+    >
+      {{isAnimating ? '抽奖中...' : '开始抽奖'}}
+    </button>
+  </view>
+
+  <!-- 抽奖结果弹窗 -->
+  <view class="result-modal" wx:if="{{showResult}}">
+    <view class="modal-content">
+      <view class="result-header">
+        <text class="result-title">{{selectedPrize.type === 'prize' ? '恭喜中奖！' : '谢谢参与'}}</text>
+      </view>
+
+      <view class="result-body">
+        <image class="result-image" src="{{selectedPrize.image}}" mode="aspectFit" />
+        <text class="result-prize-name">{{selectedPrize.name}}</text>
+        <text class="result-prize-desc" wx:if="{{selectedPrize.description}}">{{selectedPrize.description}}</text>
+
+        <view class="code-display" wx:if="{{selectedPrize.type === 'prize' && selectedPrize.rewardCode}}">
+          <text class="code-label">兑换码：</text>
+          <text class="code-value">{{selectedPrize.rewardCode}}</text>
+          <button class="copy-btn" size="mini" bindtap="onCopyCode">复制</button>
+        </view>
+      </view>
+
+      <view class="result-actions">
+        <button class="action-btn primary" bindtap="onRedeemCash" wx:if="{{selectedPrize.type === 'prize'}}">
+          兑换现金红包
+        </button>
+        <button class="action-btn secondary" bindtap="onCloseResult" wx:else>
+          返回
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

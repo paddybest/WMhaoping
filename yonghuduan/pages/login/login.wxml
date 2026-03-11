@@ -1,0 +1,42 @@
+<!--pages/login/login.wxml-->
+<view class="login-container">
+  <view class="login-card">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+
+    <view class="title-container">
+      <text class="app-name">好评宝</text>
+      <text class="app-slogan">AI智能评价生成助手</text>
+    </view>
+
+    <view class="feature-list">
+      <view class="feature-item">
+        <text class="feature-icon">🤖</text>
+        <text class="feature-text">AI智能生成评价</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">🎁</text>
+        <text class="feature-text">每日抽奖赢好礼</text>
+      </view>
+      <view class="feature-item">
+        <text class="feature-icon">⚡</text>
+        <text class="feature-text">快速便捷高效</text>
+      </view>
+    </view>
+
+    <button
+      class="login-btn {{loading ? 'disabled' : ''}}"
+      open-type="getUserInfo"
+      bindgetuserinfo="onGetUserInfo"
+      loading="{{loading}}"
+      disabled="{{loading}}">
+      微信一键登录
+    </button>
+
+    <view class="privacy-tip">
+      <text class="privacy-text">登录即表示同意</text>
+      <text class="privacy-link">《用户协议》</text>
+      <text class="privacy-text">和</text>
+      <text class="privacy-link">《隐私政策》</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "generateReview",
+  "version": "1.0.0",
+  "description": "AI review generation cloud function",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}

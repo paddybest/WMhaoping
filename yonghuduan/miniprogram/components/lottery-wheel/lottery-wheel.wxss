@@ -1,0 +1,145 @@
+/* components/lottery-wheel/lottery-wheel.wxss */
+.wheel-container {
+  position: relative;
+  width: 400rpx;
+  height: 400rpx;
+  margin: 0 auto;
+}
+
+.wheel-body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    #FFD700 0deg 180deg,
+    #E0E0E0 180deg 360deg
+  );
+  box-shadow: 0 0 0 20rpx #fff, 0 10rpx 40rpx rgba(0, 0, 0, 0.3);
+  transform-origin: center;
+}
+
+/* 转盘分段 */
+.segment {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  top: 0;
+  overflow: hidden;
+}
+
+/* 左半段 - 奖励码 */
+.segment-1 {
+  left: 0;
+  background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 20rpx;
+}
+
+/* 右半段 - 谢谢参与 */
+.segment-2 {
+  right: 0;
+  background: linear-gradient(90deg, #E0E0E0 0%, #BDBDBD 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 20rpx;
+}
+
+/* 分段文字 */
+.segment-label {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  text-shadow: 1rpx 1rpx 2rpx rgba(255, 255, 255, 0.8);
+  transform: rotate(-90deg);
+  transform-origin: center 200rpx;
+  white-space: nowrap;
+}
+
+/* 转盘中心装饰 */
+.wheel-center {
+  position: absolute;
+  width: 120rpx;
+  height: 120rpx;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.wheel-center::after {
+  content: '';
+  width: 60rpx;
+  height: 60rpx;
+  background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+  border-radius: 50%;
+  box-shadow: 0 2rpx 10rpx rgba(255, 107, 107, 0.4);
+}
+
+/* 指针 */
+.pointer {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 20rpx solid transparent;
+  border-right: 20rpx solid transparent;
+  border-bottom: 60rpx solid #FF6B6B;
+  top: -20rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  filter: drop-shadow(0 4rpx 10rpx rgba(0, 0, 0, 0.3));
+}
+
+/* 分隔线 */
+.segment::after {
+  content: '';
+  position: absolute;
+  width: 2rpx;
+  height: 100%;
+  background: white;
+  right: 0;
+  top: 0;
+  box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.3);
+}
+
+/* 旋转效果增强 */
+.wheel-body.spinning {
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* 响应式调整 */
+@media (max-width: 750rpx) {
+  .wheel-container {
+    width: 320rpx;
+    height: 320rpx;
+  }
+
+  .segment-label {
+    font-size: 24rpx;
+  }
+
+  .wheel-center {
+    width: 100rpx;
+    height: 100rpx;
+  }
+
+  .wheel-center::after {
+    width: 50rpx;
+    height: 50rpx;
+  }
+
+  .pointer {
+    border-bottom-width: 50rpx;
+  }
+}

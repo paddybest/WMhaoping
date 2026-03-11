@@ -1,0 +1,50 @@
+<view class="customer-service-container">
+  <!-- 头部 -->
+  <view class="header">
+    <text class="title">客服二维码</text>
+    <button class="back-btn" bindtap="onBackToLottery">返回抽奖</button>
+  </view>
+
+  <!-- 内容区域 -->
+  <view class="content" wx:if="{{!loading && !error}}">
+    <!-- 奖励码展示 -->
+    <view class="reward-code-section">
+      <text class="section-title">您的奖励码</text>
+      <view class="code-display">
+        <text>{{rewardCode}}</text>
+        <button size="mini" bindtap="onCopyCode">复制</button>
+      </view>
+    </view>
+
+    <!-- 二维码区域 -->
+    <view class="qr-section">
+      <text class="section-title">请扫描二维码添加客服</text>
+      <view class="qr-container">
+        <!-- 这里显示客服二维码 -->
+        <image
+          class="qr-image"
+          src="{{customerServiceQR}}"
+          mode="aspectFit"
+          binderror="onQRError"
+        />
+        <view class="qr-mask" wx:if="{{!customerServiceQR}}">
+          <text>二维码加载中...</text>
+        </view>
+      </view>
+      <button class="save-btn" bindtap="onSaveQR">
+        长按保存二维码
+      </button>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 错误状态 -->
+  <view class="error" wx:if="{{error}}">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="getCustomerServiceQR">重试</button>
+  </view>
+</view>

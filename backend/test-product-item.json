@@ -1,0 +1,6 @@
+{
+  "categoryId": 1,
+  "name": "Red Apple",
+  "tags": ["fruit", "fresh", "red"],
+  "isActive": true
+}

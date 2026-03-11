@@ -1,0 +1,83 @@
+<view class="container">
+  <view class="header">
+    <text class="title">AI 评价助手</text>
+  </view>
+
+  <view class="section">
+    <view class="picker-display" bindtap="toggleDropdown">
+      <text>{{categoryIndex >= 0 ? categories[categoryIndex].name : '请选择商品类目'}}</text>
+      <text class="arrow {{showDropdown ? 'rotate' : ''}}">▼</text>
+    </view>
+
+    <!-- Custom Dropdown -->
+    <view class="dropdown-menu {{showDropdown ? 'show' : ''}}" wx:if="{{categoryNames.length > 0}}">
+      <view
+        class="dropdown-item {{categoryIndex === index ? 'selected' : ''}}"
+        wx:for="{{categoryNames}}"
+        wx:key="*this"
+        data-index="{{index}}"
+        bindtap="onCategorySelect"
+      >
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <view class="section tags-section" wx:if="{{currentTags.length > 0}}">
+    <view class="tags-grid">
+      <view
+        class="tag-item {{selectedTags.indexOf(item) > -1 ? 'selected' : ''}}"
+        wx:for="{{currentTags}}"
+        wx:key="*this"
+        data-tag="{{item}}"
+        data-selected="{{selectedTags.indexOf(item) > -1}}"
+        bindtap="onTagToggle"
+      >
+        <text class="tag-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section rating-section">
+    <view class="rating-title">商品评分</view>
+    <view class="rating-stars">
+      <text
+        class="star {{rating >= 1 ? 'active' : ''}}"
+        data-rating="1"
+        bindtap="onRatingSelect"
+      >★</text>
+      <text
+        class="star {{rating >= 2 ? 'active' : ''}}"
+        data-rating="2"
+        bindtap="onRatingSelect"
+      >★</text>
+      <text
+        class="star {{rating >= 3 ? 'active' : ''}}"
+        data-rating="3"
+        bindtap="onRatingSelect"
+      >★</text>
+      <text
+        class="star {{rating >= 4 ? 'active' : ''}}"
+        data-rating="4"
+        bindtap="onRatingSelect"
+      >★</text>
+      <text
+        class="star {{rating >= 5 ? 'active' : ''}}"
+        data-rating="5"
+        bindtap="onRatingSelect"
+      >★</text>
+    </view>
+    <view class="rating-text">{{ratingText}}</view>
+  </view>
+
+  <view class="section action-section">
+    <button
+      class="generate-btn {{canGenerate ? 'active' : 'disabled'}}"
+      bindtap="onGenerate"
+      disabled="{{!canGenerate || loading}}"
+      loading="{{loading}}"
+    >
+      立即生成
+    </button>
+  </view>
+</view>

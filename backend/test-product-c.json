@@ -1,0 +1,6 @@
+{
+  "categoryId": 2,
+  "name": "Test Product for Deletion",
+  "tags": ["test", "delete"],
+  "isActive": true
+}

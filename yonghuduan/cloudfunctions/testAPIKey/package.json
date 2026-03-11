@@ -1,0 +1,9 @@
+{
+  "name": "testAPIKey",
+  "version": "1.0.0",
+  "description": "Test DeepSeek API Key configuration",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}

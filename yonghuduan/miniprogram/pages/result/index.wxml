@@ -1,0 +1,126 @@
+<wxs module="tools">
+function contains(arr, item) {
+  if (!arr || !arr.length) return false
+  return arr.indexOf(item) > -1
+}
+module.exports = { contains: contains }
+</wxs>
+
+<view class="container">
+  <!-- 步骤指示器 -->
+  <view class="header">
+    <view class="step-indicator">
+      <view class="step {{reviewText ? 'completed' : 'active'}}">
+        <view class="step-circle">1</view>
+        <text class="step-text">生成评价</text>
+      </view>
+      <view class="step-line {{reviewText ? 'completed' : ''}}"></view>
+      <view class="step {{reviewText ? 'active' : ''}}">
+        <view class="step-circle">2</view>
+        <text class="step-text">去评价</text>
+      </view>
+      <view class="step-line"></view>
+      <view class="step">
+        <view class="step-circle">3</view>
+        <text class="step-text">领奖励</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 标签选择区域 -->
+  <view class="section" wx:if="{{!reviewText}}">
+    <view class="product-badge" wx:if="{{productName}}">
+      <text class="badge-icon">📦</text>
+      <text class="badge-text">{{productName}}</text>
+    </view>
+    <view class="tags-header">
+      <text class="tags-title">选择评价标签</text>
+      <text class="tags-hint">轻点标签选择</text>
+    </view>
+    <view class="tags-grid">
+      <view 
+        class="tag-item {{tools.contains(selectedTags, item) ? 'selected' : ''}}" 
+        wx:for="{{currentTags}}" 
+        wx:key="*this" 
+        data-tag="{{item}}" 
+        bindtap="onTagToggle"
+      >
+        <text class="tag-text">{{item}}</text>
+      </view>
+    </view>
+    <view class="empty-tags" wx:if="{{currentTags.length === 0 && !loadingTags}}">
+      <text>暂无标签，请选择其他商家</text>
+    </view>
+  </view>
+
+  <!-- 生成按钮 -->
+  <view class="generate-section" wx:if="{{selectedTags.length > 0 && !reviewText}}">
+    <button 
+      class="generate-btn {{canGenerate && !generating ? 'active' : 'disabled'}}" 
+      bindtap="onGenerate" 
+      disabled="{{!canGenerate || generating}}"
+      loading="{{generating}}"
+    >
+      {{generating ? '生成中...' : '生成评价'}}
+    </button>
+  </view>
+
+  <!-- 生成结果区域 -->
+  <block wx:if="{{reviewText}}">
+    <!-- 商品信息 -->
+    <view class="section" wx:if="{{productName}}">
+      <view class="product-info">
+        <text class="product-label">商品</text>
+        <text class="product-name">{{productName}}</text>
+      </view>
+    </view>
+
+    <!-- 评价文案 -->
+    <view class="section">
+      <view class="section-title">
+        <text>评价文案</text>
+      </view>
+      <view class="text-content">{{reviewText}}</view>
+    </view>
+
+    <!-- 配图 -->
+    <view class="section" wx:if="{{imageUrl}}">
+      <view class="section-title">
+        <text>配图</text>
+      </view>
+      <image
+        class="review-image"
+        src="{{imageUrl}}"
+        mode="aspectFit"
+        lazy-load="{{true}}"
+        binderror="onImageError"
+        data-src="{{imageUrl}}"
+      />
+    </view>
+
+    <!-- 跳转和操作按钮 -->
+    <view class="section">
+      <view class="section-title">
+        <text>快速跳转</text>
+      </view>
+      <view class="jump-buttons">
+        <view class="jump-btn meituan" bindtap="onJumpToMeituan">
+          <view class="jump-icon">M</view>
+          <text class="jump-text">美团</text>
+        </view>
+        <view class="jump-btn eleme" bindtap="onJumpToEleme">
+          <view class="jump-icon">E</view>
+          <text class="jump-text">饿了么</text>
+        </view>
+      </view>
+      <view class="action-buttons">
+        <view class="action-btn regenerate-btn" bindtap="onRegenerate" wx:if="{{reviewText}}">
+          <text>重新生成</text>
+        </view>
+        <view class="action-btn save-btn" bindtap="onSaveAll">
+          <text>一键保存</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

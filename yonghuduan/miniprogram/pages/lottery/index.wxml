@@ -1,0 +1,35 @@
+<view class="lottery-container">
+  <!-- 标题区 -->
+  <view class="header-section">
+    <text class="title">幸运大抽奖</text>
+    <text class="subtitle">六选一，好运等你来！</text>
+  </view>
+
+  <!-- 错误提示 -->
+  <view class="error-section" wx:if="{{lotteryStatus === 'error'}}">
+    <text class="error-message">{{errorMessage}}</text>
+    <button class="retry-btn" bindtap="onRetry">重新加载</button>
+  </view>
+
+  <!-- 六选一抽奖组件 -->
+  <six-card-lottery
+    wx:if="{{lotteryStatus !== 'error'}}"
+    rewardCode="{{rewardCode}}"
+    canDraw="{{canDraw}}"
+    bind:win="onPrizeWin"
+    bind:close="onCloseLottery"
+    bind:copyAndContact="onCopyAndContact"
+    bind:redeemCash="onRedeemCash"
+  />
+
+  
+  <!-- 彩带动画 -->
+  <view class="confetti-layer" wx:if="{{showConfetti}}">
+    <view
+      wx:for="{{[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,20]}}"
+      wx:key="index"
+      class="confetti-piece"
+      style="animation-delay: {{index * 0.1}}s; left: {{Math.random() * 100}}%; background: {{getConfettiColor(index)}}; width: {{Math.random() * 20 + 10}}rpx; height: {{Math.random() * 20 + 10}}rpx;"
+    />
+  </view>
+</view>
