@@ -3,6 +3,11 @@ import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
 import OSS = require('ali-oss');
 import { pool } from '../database/connection';
 import { MerchantModel } from '../database/models/Merchant';
+import {
+  generateMerchantMiniProgramCode,
+  generateProductMiniProgramCode,
+  generateCategoryMiniProgramCode
+} from './wechat';
 
 /**
  * QRCode Service
@@ -136,6 +141,7 @@ async function uploadQRCodeToOSS(
 
 /**
  * 生成并上传商家二维码
+ * 优先使用微信小程序码，失败时回退到普通二维码
  *
  * @param merchantId - 商家ID
  * @returns 二维码URL
@@ -146,10 +152,19 @@ export async function generateAndUploadMerchantQRCode(
   try {
     console.log(`[QRCode] 开始生成商家二维码，merchantId: ${merchantId}`);
 
-    // 1. 生成二维码
+    // 优先尝试生成微信小程序码
+    try {
+      const miniProgramCodeUrl = await generateMerchantMiniProgramCode(merchantId);
+      console.log(`[QRCode] 微信小程序码生成成功，URL: ${miniProgramCodeUrl}`);
+      return miniProgramCodeUrl;
+    } catch (wechatError: any) {
+      console.warn('[QRCode] 微信小程序码生成失败，回退到普通二维码:', wechatError.message);
+    }
+
+    // 回退：生成普通二维码
     const qrBuffer = await generateMerchantQRCode(merchantId);
 
-    // 2. 尝试上传到OSS，如果失败则使用data URL
+    // 尝试上传到OSS，如果失败则使用data URL
     try {
       const { url } = await uploadQRCodeToOSS(merchantId, qrBuffer);
       console.log(`[QRCode] 二维码上传成功，URL: ${url}`);
@@ -375,6 +390,7 @@ async function uploadCategoryQRCodeToOSS(
 
 /**
  * 生成并上传分类二维码
+ * 优先使用微信小程序码，失败时回退到普通二维码
  *
  * @param merchantId - 商家ID
  * @param categoryId - 分类ID
@@ -389,10 +405,19 @@ export async function generateAndUploadCategoryQRCode(
   try {
     console.log(`[QRCode] 开始生成分类二维码，merchantId: ${merchantId}, categoryId: ${categoryId}`);
 
-    // 1. 生成二维码
+    // 优先尝试生成微信小程序码
+    try {
+      const miniProgramCodeUrl = await generateCategoryMiniProgramCode(merchantId, categoryId);
+      console.log(`[QRCode] 微信分类小程序码生成成功，URL: ${miniProgramCodeUrl}`);
+      return miniProgramCodeUrl;
+    } catch (wechatError: any) {
+      console.warn('[QRCode] 微信小程序码生成失败，回退到普通二维码:', wechatError.message);
+    }
+
+    // 回退：生成普通二维码
     const qrBuffer = await generateCategoryQRCode(merchantId, categoryId, categoryName);
 
-    // 2. 尝试上传到OSS，如果失败则使用data URL
+    // 尝试上传到OSS，如果失败则使用data URL
     try {
       const { url } = await uploadCategoryQRCodeToOSS(merchantId, categoryId, qrBuffer);
       console.log(`[QRCode] 分类二维码上传成功，URL: ${url}`);
@@ -475,6 +500,7 @@ async function uploadProductQRCodeToOSS(
 
 /**
  * 生成并上传商品二维码
+ * 优先使用微信小程序码，失败时回退到普通二维码
  *
  * @param merchantId - 商家ID
  * @param productId - 商品ID
@@ -487,6 +513,16 @@ export async function generateAndUploadProductQRCode(
   try {
     console.log(`[QRCode] 开始生成商品二维码，merchantId: ${merchantId}, productId: ${productId}`);
 
+    // 优先尝试生成微信小程序码
+    try {
+      const miniProgramCodeUrl = await generateProductMiniProgramCode(merchantId, productId);
+      console.log(`[QRCode] 微信商品小程序码生成成功，URL: ${miniProgramCodeUrl}`);
+      return miniProgramCodeUrl;
+    } catch (wechatError: any) {
+      console.warn('[QRCode] 微信小程序码生成失败，回退到普通二维码:', wechatError.message);
+    }
+
+    // 回退：生成普通二维码
     const qrBuffer = await generateProductQRCode(merchantId, productId);
 
     try {
