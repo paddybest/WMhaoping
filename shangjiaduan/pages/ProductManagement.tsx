@@ -762,14 +762,13 @@ export const ProductManagement: React.FC = () => {
                 : 'bg-orange-600 text-white hover:bg-orange-700'
             }`}
           >
-          >
-              {batchQrGenerating ? (
-                <Loader2 size={16} className="mr-2 animate-spin" />
-              ) : (
-                <QrCode size={16} className="mr-2" />
-              )}
-              批量生成 ({selectedProducts.size})
-            </button>
+            {batchQrGenerating ? (
+              <Loader2 size={16} className="mr-2 animate-spin" />
+            ) : (
+              <QrCode size={16} className="mr-2" />
+            )}
+            批量生成 ({selectedProducts.size})
+          </button>
           </div>
         </div>
 
