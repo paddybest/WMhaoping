@@ -747,21 +747,21 @@ export const ProductManagement: React.FC = () => {
 
         {/* 操作栏 */}
         <div className="flex justify-end gap-2">
-            <button
-              onClick={handleProductSelectAll}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
-            >
-              全选未生成
-            </button>
-            <button
-              onClick={handleBatchGenerateProductQR}
-              disabled={selectedProducts.size === 0 || batchQrGenerating}
-              className={`px-4 py-2 rounded-lg font-medium flex items-center ${
-                selectedProducts.size === 0 || batchQrGenerating
-                  ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-orange-600 text-white hover:bg-orange-700'
-              }`}
-            >
+          <button
+            onClick={handleProductSelectAll}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
+          >
+            全选未生成
+          </button>
+          <button
+            onClick={handleBatchGenerateProductQR}
+            disabled={selectedProducts.size === 0 || batchQrGenerating}
+            className={`px-4 py-2 rounded-lg font-medium flex items-center ${
+              selectedProducts.size === 0 || batchQrGenerating
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700'
+            }`}
+          >
               {batchQrGenerating ? (
                 <Loader2 size={16} className="mr-2 animate-spin" />
               ) : (
