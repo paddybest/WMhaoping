@@ -769,7 +769,6 @@ export const ProductManagement: React.FC = () => {
             )}
             批量生成 ({selectedProducts.size})
           </button>
-          </div>
         </div>
 
         {/* 商品列表 */}
