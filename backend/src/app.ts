@@ -97,8 +97,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/merchant/categories', productCategoryRoutes);
-app.use('/api/merchant/products', productItemRoutes);
+// 产品图片路由必须在产品路由之前，避免 /:id/images 被 /:id 匹配
 app.use('/api/merchant/products', productImageRoutes);
+app.use('/api/merchant/products', productItemRoutes);
 app.use('/api/miniprogram', miniprogramProductRoutes);
 app.use('/api/miniprogram/customer-service', miniprogramCustomerServiceRoutes);
 app.use('/api/miniprogram/merchant', miniprogramMerchantRoutes);

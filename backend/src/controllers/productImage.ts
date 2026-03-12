@@ -29,8 +29,8 @@ export class ProductImageController {
 
       // 检查图片数量限制
       const imageCount = await ProductImageModel.countByProduct(productId);
-      if (imageCount >= 9) {
-        res.status(400).json({ error: 'Maximum 9 images allowed per product' });
+      if (imageCount >= 50) {
+        res.status(400).json({ error: 'Maximum 50 images allowed per product' });
         return;
       }
 
