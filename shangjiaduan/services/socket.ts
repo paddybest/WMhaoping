@@ -10,7 +10,8 @@ export const connectSocket = (token: string, merchantId?: number) => {
 
   socket = io(SOCKET_URL, {
     auth: { token },
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'],
+    path: '/socket.io',
   });
 
   socket.on('connect', () => {

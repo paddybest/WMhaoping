@@ -43,7 +43,6 @@ export const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [productLoading, setProductLoading] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal状态
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
@@ -393,9 +392,8 @@ export const ProductManagement: React.FC = () => {
     );
   };
 
-  const filteredProducts = products.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // 显示所有产品（不再按搜索过滤）
+  const filteredProducts = products;
 
   return (
     <div className="p-8">
@@ -642,37 +640,22 @@ export const ProductManagement: React.FC = () => {
         {/* 下方产品列表 */}
         <div className="flex-1 border rounded-lg p-4 bg-white">
           <h2 className="text-lg font-semibold mb-4">产品管理</h2>
-          {/* 筛选栏 */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <div className="flex gap-4 items-center">
-              <div className="flex-1">
-                <label className="block text-sm font-medium mb-2">搜索</label>
-                <div className="relative">
-                  <Search size={20} className="absolute left-3 top-2.5 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full border rounded-lg pl-10 pr-3 py-2"
-                    placeholder="搜索产品名称或标签"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={handleAddProduct}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 mt-6"
-              >
-                <Plus size={20} className="inline mr-2" />
-                添加产品
-              </button>
-              <button
-                onClick={() => setImportModalOpen(true)}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 mt-6 ml-2"
-              >
-                <Upload size={20} className="inline mr-2" />
-                导入
-              </button>
-            </div>
+          {/* 操作按钮栏 */}
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={handleAddProduct}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              <Plus size={20} className="inline mr-2" />
+              添加产品
+            </button>
+            <button
+              onClick={() => setImportModalOpen(true)}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              <Upload size={20} className="inline mr-2" />
+              导入
+            </button>
           </div>
 
           {/* 产品列表 */}

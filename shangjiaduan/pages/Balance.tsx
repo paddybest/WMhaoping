@@ -106,8 +106,7 @@ export const Balance: React.FC = () => {
     try {
       const res = await api.post('/redemption/merchant/verify', {
         recordId,
-        approved,
-        merchantId: balance?.merchant_id
+        approved
       });
 
       if (res.data.success) {

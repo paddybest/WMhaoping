@@ -120,6 +120,7 @@ async function runMigrations() {
       { name: '008-create-product-tags-table', up: () => require('./008-create-product-tags-table').up() },
       { name: '009-add-merchant-contact-fields', up: () => require('./009-add-merchant-contact-fields').up() },
       { name: '010-create-product-tags-association', up: () => require('./010-create-product-tags-association').up() },
+      { name: '011-add-category-tags-column', up: () => require('./011-add-category-tags-column').up() },
     ];
 
     console.log(`📋 Found ${migrations.length} migrations to check\n`);

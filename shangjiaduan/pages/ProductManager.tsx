@@ -121,20 +121,6 @@ export const ProductManager: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">搜索</label>
-            <div className="relative">
-              <Search size={20} className="absolute left-3 top-2.5 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border rounded-lg pl-10 pr-3 py-2"
-                placeholder="搜索产品名称或标签"
-              />
-            </div>
-          </div>
-
           <button
             onClick={handleAdd}
             disabled={!selectedCategoryId}

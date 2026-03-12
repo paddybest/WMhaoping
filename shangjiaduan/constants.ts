@@ -1,8 +1,8 @@
-// API配置
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// API配置 - 使用相对路径，通过 nginx 代理访问
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
-// WebSocket配置
-export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:5000';
+// Socket.IO配置 - 使用相对路径
+export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '/socket.io';
 
 export const MENU_ITEMS = [
   { path: '/', label: '仪表盘', icon: 'LayoutDashboard' },

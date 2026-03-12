@@ -1,8 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { RedemptionRecordModel } from '../database/models/RedemptionRecord';
 import { MerchantBalanceModel } from '../database/models/MerchantBalance';
+import { authenticateMerchant } from '../middleware/auth';
+import { injectMerchantId } from '../middleware/merchantContext';
 
 const router = Router();
+
+// 商家相关路由需要认证
+router.use(authenticateMerchant);
+router.use(injectMerchantId);
 
 // 获取用户的返现记录
 router.get('/my', async (req: Request, res: Response): Promise<void> => {
@@ -75,24 +81,20 @@ router.post('/create', async (req: Request, res: Response): Promise<void> => {
 
 // 商家获取返现记录列表
 router.get('/merchant/list', async (req: Request, res: Response): Promise<void> => {
-  const merchantId = req.query.merchantId;
+  const merchantId = (req as any).merchantId;
   const status = req.query.status as string | undefined;
 
-  if (!merchantId) {
-    res.status(400).json({ success: false, error: 'merchantId required' });
-    return;
-  }
-
-  const records = await RedemptionRecordModel.findByMerchant(parseInt(merchantId as string), status);
+  const records = await RedemptionRecordModel.findByMerchant(merchantId, status);
   res.json({ success: true, data: records });
 });
 
 // 商家审核返现
 router.post('/merchant/verify', async (req: Request, res: Response): Promise<void> => {
-  const { recordId, approved, merchantId } = req.body;
+  const merchantId = (req as any).merchantId;
+  const { recordId, approved } = req.body;
 
-  if (!recordId || approved === undefined || !merchantId) {
-    res.status(400).json({ success: false, error: 'recordId, approved, merchantId required' });
+  if (!recordId || approved === undefined) {
+    res.status(400).json({ success: false, error: 'recordId and approved required' });
     return;
   }
 
@@ -103,7 +105,7 @@ router.post('/merchant/verify', async (req: Request, res: Response): Promise<voi
   }
 
   // 验证商家权限
-  if (record.merchant_id !== parseInt(merchantId)) {
+  if (record.merchant_id !== merchantId) {
     res.status(403).json({ success: false, error: 'Unauthorized' });
     return;
   }
@@ -112,32 +114,28 @@ router.post('/merchant/verify', async (req: Request, res: Response): Promise<voi
 
   // 如果审核通过，扣除商家余额
   if (approved) {
-    const balance = await MerchantBalanceModel.findByMerchantId(parseInt(merchantId));
+    const balance = await MerchantBalanceModel.findByMerchantId(merchantId);
     if (!balance || balance.balance < record.cash_amount) {
       res.status(400).json({ success: false, error: '商家余额不足，无法返现' });
       return;
     }
     // 扣除余额
-    await MerchantBalanceModel.deduct(parseInt(merchantId), record.cash_amount);
+    await MerchantBalanceModel.deduct(merchantId, record.cash_amount);
   }
 
-  await RedemptionRecordModel.updateStatus(parseInt(recordId), newStatus, parseInt(merchantId));
+  await RedemptionRecordModel.updateStatus(parseInt(recordId), newStatus, merchantId);
 
   res.json({ success: true });
 });
 
 // 商家获取余额
 router.get('/merchant/balance', async (req: Request, res: Response): Promise<void> => {
-  const merchantId = req.query.merchantId;
-  if (!merchantId) {
-    res.status(400).json({ success: false, error: 'merchantId required' });
-    return;
-  }
+  const merchantId = (req as any).merchantId;
 
-  const balance = await MerchantBalanceModel.findByMerchantId(parseInt(merchantId as string));
+  const balance = await MerchantBalanceModel.findByMerchantId(merchantId);
   if (!balance) {
     // 自动创建
-    const newBalance = await MerchantBalanceModel.getOrCreate(parseInt(merchantId as string));
+    const newBalance = await MerchantBalanceModel.getOrCreate(merchantId);
     res.json({ success: true, data: newBalance });
     return;
   }
@@ -147,14 +145,15 @@ router.get('/merchant/balance', async (req: Request, res: Response): Promise<voi
 
 // 商家充值
 router.post('/merchant/recharge', async (req: Request, res: Response): Promise<void> => {
-  const { merchantId, amount } = req.body;
+  const merchantId = (req as any).merchantId;
+  const { amount } = req.body;
 
-  if (!merchantId || !amount || amount <= 0) {
-    res.status(400).json({ success: false, error: 'merchantId and positive amount required' });
+  if (!amount || amount <= 0) {
+    res.status(400).json({ success: false, error: 'positive amount required' });
     return;
   }
 
-  const balance = await MerchantBalanceModel.recharge(parseInt(merchantId), parseFloat(amount));
+  const balance = await MerchantBalanceModel.recharge(merchantId, parseFloat(amount));
   res.json({ success: true, data: balance });
 });
 

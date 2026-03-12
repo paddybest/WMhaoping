@@ -1,7 +1,7 @@
 import app from './app';
 import { SocketService } from './services/socket';
 
-const PORT = parseInt(process.env.PORT || '7777');
+const PORT = parseInt(process.env.PORT || '8080');
 
 async function startServer() {
   try {

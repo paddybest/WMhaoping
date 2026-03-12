@@ -86,7 +86,7 @@ router.get('/trends', async (req: Request, res: Response) => {
       `SELECT DATE(r.created_at) as date, COUNT(*) as count
        FROM reviews r
        INNER JOIN product_items pi ON r.product_id = pi.id
-       WHERE pi.merchant_id = $1 AND r.created_at >= NOW() - INTERVAL '$2 days'
+       WHERE pi.merchant_id = $1 AND r.created_at >= NOW() - ($2 || ' days')::INTERVAL
        GROUP BY DATE(r.created_at)
        ORDER BY date ASC`,
       [merchantId, days]
@@ -108,6 +108,57 @@ router.get('/trends', async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       error: '获取趋势数据失败'
+    });
+  }
+});
+
+/**
+ * GET /api/merchant/stats/activities
+ * 获取活动数据（最近的操作记录）
+ */
+router.get('/activities', async (req: Request, res: Response) => {
+  const merchantId = (req as any).merchantId;
+  const limit = parseInt(req.query.limit as string) || 10;
+
+  try {
+    // 获取最近的扫码记录
+    const scanResult = await pool.query(
+      `SELECT DATE(created_at) as date, COUNT(*) as count, 'scan' as type
+       FROM qr_code_scans
+       WHERE merchant_id = $1
+       GROUP BY DATE(created_at)
+       ORDER BY date DESC
+       LIMIT $2`,
+      [merchantId, limit]
+    );
+
+    // 获取最近的评价
+    const reviewResult = await pool.query(
+      `SELECT DATE(r.created_at) as date, COUNT(*) as count, 'review' as type
+       FROM reviews r
+       INNER JOIN product_items pi ON r.product_id = pi.id
+       WHERE pi.merchant_id = $1
+       GROUP BY DATE(r.created_at)
+       ORDER BY date DESC
+       LIMIT $2`,
+      [merchantId, limit]
+    );
+
+    // 合并结果
+    const activities = [
+      ...scanResult.rows,
+      ...reviewResult.rows
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return res.json({
+      success: true,
+      data: activities.slice(0, limit)
+    });
+  } catch (error) {
+    console.error('获取活动数据失败:', error);
+    return res.status(500).json({
+      success: false,
+      error: '获取活动数据失败'
     });
   }
 });

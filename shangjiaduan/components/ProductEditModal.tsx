@@ -75,34 +75,37 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    if (images.length >= 9) {
-      alert('最多只能上传9张图片');
-      return;
+    const remainingSlots = 50 - images.length;
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+
+    if (files.length > remainingSlots) {
+      alert(`最多还能上传 ${remainingSlots} 张图片，已选择前 ${filesToUpload.length} 张`);
     }
 
-    const file = files[0];
-    if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过5MB');
-      return;
-    }
+    for (const file of filesToUpload) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`图片 ${file.name} 大小超过5MB，已跳过`);
+        continue;
+      }
 
-    // 检查是否是图片文件
-    if (!file.type.startsWith('image/')) {
-      alert('请上传图片文件');
-      return;
-    }
+      // 检查是否是图片文件
+      if (!file.type.startsWith('image/')) {
+        alert(`文件 ${file.name} 不是图片，已跳过`);
+        continue;
+      }
 
-    // 如果是编辑模式，直接上传到服务器
-    if (isEditMode && product?.id) {
-      await uploadImageToServer(file);
-    } else {
-      // 如果是创建模式，先用本地预览
-      const localUrl = URL.createObjectURL(file);
-      setImages([...images, {
-        imageUrl: localUrl,
-        isNew: true,
-        file: file
-      } as any]);
+      // 如果是编辑模式，直接上传到服务器
+      if (isEditMode && product?.id) {
+        await uploadImageToServer(file);
+      } else {
+        // 如果是创建模式，先用本地预览
+        const localUrl = URL.createObjectURL(file);
+        setImages(prev => [...prev, {
+          imageUrl: localUrl,
+          isNew: true,
+          file: file
+        } as any]);
+      }
     }
 
     // 清空input以便再次选择同一文件
@@ -314,7 +317,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
           {/* 图片上传 - 创建和编辑模式都支持 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              产品图片 <span className="text-gray-400 font-normal">(最多9张)</span>
+              产品图片 <span className="text-gray-400 font-normal">(最多50张)</span>
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
               {images.map((image, index) => (
@@ -339,7 +342,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 </div>
               ))}
 
-              {images.length < 9 && (
+              {images.length < 50 && (
                 <label className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all group">
                   <input
                     ref={fileInputRef}
@@ -347,6 +350,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     accept="image/jpeg,image/png,image/webp"
                     onChange={handleImageUpload}
                     disabled={uploading}
+                    multiple
                     className="hidden"
                   />
                   {uploading ? (

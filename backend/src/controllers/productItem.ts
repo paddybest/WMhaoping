@@ -52,33 +52,7 @@ export class ProductItemController {
         return;
       }
 
-      // 验证商品至少上传了2张图片（如果激活状态为true）
-      if (isActive) {
-        // 先创建产品获取ID，然后检查图片数量
-        const tempProduct = await ProductItemModel.create({
-          merchantId,
-          categoryId: parseInt(categoryId),
-          name,
-          tags: [],
-          isActive: false // 先创建为未激活状态
-        });
-        const imageCount = await ProductImageModel.countByProduct(tempProduct.id!);
-        if (imageCount < 2) {
-          // 删除临时创建的产品
-          await ProductItemModel.delete(tempProduct.id!, merchantId);
-          res.status(400).json({ error: 'Each product must have at least 2 images before activation' });
-          return;
-        }
-        // 图片数量足够，激活产品
-        const product = await ProductItemModel.update(tempProduct.id!, { isActive: true });
-        res.status(201).json({
-          success: true,
-          data: product,
-          message: 'Product created successfully'
-        });
-        return;
-      }
-
+      // 允许先创建商品，后续再添加图片
       const product = await ProductItemModel.create({
         merchantId,
         categoryId: parseInt(categoryId),
@@ -119,14 +93,7 @@ export class ProductItemController {
         return;
       }
 
-      // 如果要激活产品，验证至少上传了2张图片
-      if (isActive === true && !product.isActive) {
-        const imageCount = await ProductImageModel.countByProduct(productId);
-        if (imageCount < 2) {
-          res.status(400).json({ success: false, error: 'Each product must have at least 2 images before activation' });
-          return;
-        }
-      }
+      // 允许激活产品时没有图片，后续可以再添加
 
       const updates: any = {};
       if (name !== undefined) updates.name = name;
