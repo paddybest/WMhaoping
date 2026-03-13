@@ -36,7 +36,14 @@ export const Balance: React.FC = () => {
     try {
       const res = await api.get('/redemption/merchant/balance');
       if (res.data.success) {
-        setBalance(res.data.data);
+        const data = res.data.data;
+        // 确保数值字段是数字类型
+        setBalance({
+          ...data,
+          balance: parseFloat(data.balance) || 0,
+          total_recharged: parseFloat(data.total_recharged) || 0,
+          total_redeemed: parseFloat(data.total_redeemed) || 0,
+        });
       }
     } catch (error) {
       console.error('Failed to fetch balance:', error);
@@ -50,7 +57,12 @@ export const Balance: React.FC = () => {
       const params = filterStatus ? `?status=${filterStatus}` : '?status=pending';
       const res = await api.get(`/redemption/merchant/list${params}`);
       if (res.data.success) {
-        setRecords(res.data.data || []);
+        // 确保 cash_amount 是数字类型
+        const data = (res.data.data || []).map((item: any) => ({
+          ...item,
+          cash_amount: parseFloat(item.cash_amount) || 0,
+        }));
+        setRecords(data);
       }
     } catch (error) {
       console.error('Failed to fetch records:', error);
