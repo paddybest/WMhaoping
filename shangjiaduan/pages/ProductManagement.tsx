@@ -90,8 +90,7 @@ export const ProductManagement: React.FC = () => {
 
   // 获取产品列表
   const fetchProducts = async () => {
-    if (!selectedCategoryId) {
-      setProducts([]);
+    if (!selectedCategoryId || selectedCategoryId === 0) {
       return;
     }
     setProductLoading(true);
@@ -156,8 +155,17 @@ export const ProductManagement: React.FC = () => {
     fetchTags();
   }, []);
 
+  // 当分类列表加载完成后，如果没有选中分类，自动选择第一个
   useEffect(() => {
-    fetchProducts();
+    if (categories.length > 0 && selectedCategoryId === 0) {
+      setSelectedCategoryId(categories[0].id);
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    if (selectedCategoryId > 0) {
+      fetchProducts();
+    }
   }, [selectedCategoryId]);
 
   // 分类操作
