@@ -50,31 +50,56 @@ async function getAccessToken(): Promise<string> {
   return cachedAccessToken!;
 }
 
+// 微信小程序页面路径配置
+// 开发环境使用未发布的页面，生产环境使用已发布的页面
+const DEFAULT_PAGE_DEV = 'pages/index/index';  // 开发版页面
+const DEFAULT_PAGE_PROD = 'pages/index/index'; // 正式版页面
+
+function getDefaultPage(): string {
+  // 可以通过环境变量控制使用哪个页面
+  // 设置 WX_PAGE_DEV_MODE=1 使用开发版页面
+  if (process.env.WX_PAGE_DEV_MODE === '1') {
+    return DEFAULT_PAGE_DEV;
+  }
+  return DEFAULT_PAGE_PROD;
+}
+
+// 获取小程序版本（开发版/体验版/正式版）
+function getEnvVersion(): 'develop' | 'trial' | 'release' {
+  if (process.env.WX_PAGE_DEV_MODE === '1') {
+    return 'develop';  // 开发版
+  }
+  return 'release';   // 正式版
+}
+
 /**
  * 生成小程序码（无限量）
  *
  * @param scene - 场景参数，最大32个字符
- * @param page - 页面路径，默认 pages/index/index
+ * @param page - 页面路径，默认根据环境配置
  * @param width - 二维码宽度，默认 430
  * @param isHyaline - 是否透明背景，默认 false
  * @returns 小程序码图片 Buffer
  */
 async function generateMiniProgramCode(
   scene: string,
-  page: string = 'pages/index/index',
+  page?: string,
   width: number = 430,
   isHyaline: boolean = false
 ): Promise<Buffer> {
+  // 如果没有指定页面，使用默认页面
+  const targetPage = page || getDefaultPage();
+
   const accessToken = await getAccessToken();
 
   const url = `${WX_WXACODE_URL}?access_token=${accessToken}`;
 
   const requestBody = {
     scene,
-    page,
+    page: targetPage,
     width,
     is_hyaline: isHyaline,
-    env_version: 'release' // 生产环境
+    env_version: getEnvVersion() // 根据环境变量决定版本
   };
 
   const response = await fetch(url, {
@@ -95,7 +120,7 @@ async function generateMiniProgramCode(
       if (errorData.errcode === 40001) {
         cachedAccessToken = null;
         tokenExpireTime = 0;
-        return generateMiniProgramCode(scene, page, width, isHyaline);
+        return generateMiniProgramCode(scene, targetPage, width, isHyaline);
       }
       throw new Error(`WeChat API error: ${errorData.errmsg} (code: ${errorData.errcode})`);
     }
@@ -111,7 +136,7 @@ const ossClient = new OSS({
   region: process.env.OSS_REGION || 'oss-cn-hangzhou',
   accessKeyId: process.env.OSS_ACCESS_KEY_ID!,
   accessKeySecret: process.env.OSS_ACCESS_KEY_SECRET!,
-  bucket: process.env.OSS_QR_BUCKET || 'haopingbao-qrcodes'
+  bucket: process.env.OSS_BUCKET || 'wmhaopingbao'
 });
 
 /**
