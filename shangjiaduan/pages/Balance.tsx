@@ -31,6 +31,11 @@ export const Balance: React.FC = () => {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('');
 
+  // 支付二维码弹窗状态
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [paymentCodeUrl, setPaymentCodeUrl] = useState('');
+  const [currentOrderId, setCurrentOrderId] = useState('');
+
   // 获取余额
   const fetchBalance = async () => {
     try {
@@ -81,6 +86,20 @@ export const Balance: React.FC = () => {
     }
   }, [activeTab, filterStatus]);
 
+  // 轮询检查支付状态
+  const checkPaymentStatus = async (orderId: string) => {
+    try {
+      const res = await api.get(`/api/payment/status/${orderId}`);
+      if (res.data.data?.tradeState === 'SUCCESS') {
+        setQrModalOpen(false);
+        setMessage({ type: 'success', text: '充值成功！' });
+        fetchBalance();
+      }
+    } catch (error) {
+      console.error('检查支付状态失败:', error);
+    }
+  };
+
   // 充值
   const handleRecharge = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,14 +114,36 @@ export const Balance: React.FC = () => {
     setMessage(null);
 
     try {
-      const res = await api.post('/redemption/merchant/recharge', {
+      const res = await api.post('/api/payment/create-recharge-order', {
         amount: amount
       });
 
       if (res.data.success) {
-        setMessage({ type: 'success', text: `充值成功！当前余额：¥${res.data.data.balance.toFixed(2)}` });
-        setBalance(res.data.data);
-        setRechargeAmount('');
+        // 如果是模拟模式，直接成功
+        if (res.data.data.simulate) {
+          setMessage({ type: 'success', text: `充值成功！当前余额：¥${parseFloat(res.data.data.amount).toFixed(2)}` });
+          setRechargeAmount('');
+          fetchBalance();
+        } else {
+          // 真实支付，显示二维码
+          setPaymentCodeUrl(res.data.data.codeUrl);
+          setCurrentOrderId(res.data.data.orderId);
+          setQrModalOpen(true);
+
+          // 轮询检查支付状态
+          const timer = setInterval(() => {
+            checkPaymentStatus(currentOrderId);
+          }, 2000);
+
+          // 5分钟后停止轮询
+          setTimeout(() => {
+            clearInterval(timer);
+            if (qrModalOpen) {
+              setQrModalOpen(false);
+              setMessage({ type: 'error', text: '支付超时，请重试' });
+            }
+          }, 300000);
+        }
       } else {
         setMessage({ type: 'error', text: res.data.error || '充值失败' });
       }
@@ -156,6 +197,30 @@ export const Balance: React.FC = () => {
 
   return (
     <div className="p-6">
+      {/* 支付二维码弹窗 */}
+      {qrModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm">
+            <h3 className="text-lg font-semibold mb-4">请使用微信扫码支付</h3>
+            {paymentCodeUrl && (
+              <div className="flex justify-center mb-4">
+                <img src={paymentCodeUrl} alt="支付二维码" className="w-48 h-48" />
+              </div>
+            )}
+            <p className="text-sm text-gray-500 mb-4">支付完成后自动更新余额</p>
+            <button
+              onClick={() => {
+                setQrModalOpen(false);
+                setMessage({ type: 'error', text: '已取消支付' });
+              }}
+              className="w-full bg-gray-200 text-gray-700 py-2 rounded"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 页面标题 */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-800">资金管理</h1>
