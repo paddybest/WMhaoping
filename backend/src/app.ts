@@ -28,6 +28,7 @@ import qrCodeScanRoutes from './routes/qrCodeScan';
 import tagsRoutes from './routes/tags';
 import statsRoutes from './routes/stats';
 import redemptionRoutes from './routes/redemption';
+import paymentRoutes from './routes/payment';
 
 dotenv.config();
 
@@ -110,6 +111,7 @@ app.use('/api/merchant/scan', qrCodeScanRoutes);
 app.use('/api/merchant/tags', tagsRoutes);
 app.use('/api/merchant/stats', statsRoutes);
 app.use('/api/redemption', redemptionRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // 404处理
 app.use('*', (req, res) => {
