@@ -44,7 +44,8 @@
     "pg": "^8.11.3",
     "qrcode": "^1.5.4",
     "redis": "^4.7.1",
-    "socket.io": "^4.7.4"
+    "socket.io": "^4.7.4",
+    "wechatpay-node-v3": "^1.2.9"
   },
   "devDependencies": {
     "@types/ali-oss": "^6.23.3",
